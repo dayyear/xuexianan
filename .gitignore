@@ -1,0 +1,13 @@
+mingw32-7.3.0/
+third_party/
+
+.settings/
+.cproject
+.project
+Release/
+Debug/
+
+obj/*.d
+obj/*.o
+bin/xuexianan.exe
+log/
