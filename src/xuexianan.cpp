@@ -38,7 +38,7 @@ int main() {
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "3" << " - " << "连接夜神模拟器" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(8) << " " << "* 安装夜神模拟器后，记得将目录[Nox\\bin]下的文件[adb.exe]和[nox_adb.exe]用本项目的[adb.exe]替换，以保持版本一致" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "Q" << " - " << "退出" << std::endl;
-            std::string arg = user_input("请选择(1-2/Q): ");
+            std::string arg = user_input("请选择(1-3/Q): ");
             if (arg == "1") {
             } else if (arg == "2") {
                 adb.connect("127.0.0.1", 7555);
