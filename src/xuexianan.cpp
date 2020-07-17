@@ -26,6 +26,7 @@ std::string user_input(const std::string &message) {
 }
 
 int main() {
+    std::srand(std::time(NULL));
     for (;;) {
         try {
             adb adb;

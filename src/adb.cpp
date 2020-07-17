@@ -60,7 +60,6 @@ void adb::init() {
     }
     getxy(back_x, back_y, node.attribute("bounds").value(), 33, 10);
     logger->debug("返回按钮：({},{})", back_x, back_y);
-
 }
 
 // 学习文章
@@ -138,7 +137,13 @@ void adb::read() {
                 text = get_text(node);
                 logger->info("[学习文章]：{}. {}({}秒)", titles.size() + 1, text, delay);
                 tap(node, 2, false);
-                std::this_thread::sleep_for(std::chrono::seconds(delay));
+                for (int i = 0; i < delay / 20; i++) {
+                    if (rand() % 2)
+                        swipe_up(0, false);
+                    else
+                        swipe_down(0, false);
+                    std::this_thread::sleep_for(std::chrono::seconds(20 + std::rand() % 3));
+                }
                 titles.push_back(text);
                 c++;
                 back();
@@ -230,7 +235,7 @@ void adb::listen() {
                 text = get_text(node);
                 logger->info("[视听学习]：{}. {}({}秒)", titles.size() + 1, text, delay);
                 tap(node, 2, false);
-                std::this_thread::sleep_for(std::chrono::seconds(delay));
+                std::this_thread::sleep_for(std::chrono::seconds(delay + (delay / 30) * (std::rand() % 4)));
                 titles.push_back(text);
                 c++;
                 back();
@@ -569,7 +574,7 @@ void adb::tap(int x, int y, int64_t delay, bool is_pull) {
     std::ostringstream oss;
     oss << "adb shell input tap " << x << " " << y;
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay));
+    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
     if (is_pull)
         pull();
 }
@@ -584,9 +589,9 @@ void adb::tap(const pugi::xml_node &node, int64_t delay, bool is_pull) {
 // 上滑
 void adb::swipe_up(int64_t delay, bool is_pull) {
     std::ostringstream oss;
-    oss << "adb shell input swipe " << width * 0.6 << " " << height * 0.7 << " " << width * 0.6 << " " << height * 0.3 << " " << 1000;
+    oss << "adb shell input swipe " << (width * (std::rand() % 10 + 55) / 100.0) << " " << (height * (std::rand() % 10 + 65) / 100.0) << " " << (width * (std::rand() % 10 + 55) / 100.0) << " " << (height * (std::rand() % 10 + 25) / 100.0) << " " << (std::rand() % 400 + 800);
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay));
+    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
     if (is_pull)
         pull();
 }
@@ -594,9 +599,9 @@ void adb::swipe_up(int64_t delay, bool is_pull) {
 // 下滑
 void adb::swipe_down(int64_t delay, bool is_pull) {
     std::ostringstream oss;
-    oss << "adb shell input swipe " << width * 0.6 << " " << height * 0.3 << " " << width * 0.6 << " " << height * 0.7 << " " << 1000;
+    oss << "adb shell input swipe " << (width * (std::rand() % 10 + 55) / 100.0) << " " << (height * (std::rand() % 10 + 25) / 100.0) << " " << (width * (std::rand() % 10 + 55) / 100.0) << " " << (height * (std::rand() % 10 + 65) / 100.0) << " " << (std::rand() % 400 + 800);
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay));
+    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
     if (is_pull)
         pull();
 }
@@ -604,9 +609,9 @@ void adb::swipe_down(int64_t delay, bool is_pull) {
 // 左滑
 void adb::swipe_left(int64_t delay, bool is_pull) {
     std::ostringstream oss;
-    oss << "adb shell input swipe " << width * 0.9 << " " << height * 0.8 << " " << width * 0.1 << " " << height * 0.8 << " " << 1000;
+    oss << "adb shell input swipe " << (width * (std::rand() % 9 + 89) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (width * (std::rand() % 10 + 1) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (std::rand() % 400 + 800);
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay));
+    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
     if (is_pull)
         pull();
 }
@@ -614,9 +619,9 @@ void adb::swipe_left(int64_t delay, bool is_pull) {
 // 右滑
 void adb::swipe_right(int64_t delay, bool is_pull) {
     std::ostringstream oss;
-    oss << "adb shell input swipe " << width * 0.1 << " " << height * 0.8 << " " << width * 0.9 << " " << height * 0.8 << " " << 1000;
+    oss << "adb shell input swipe " << (width * (std::rand() % 10 + 1) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (width * (std::rand() % 9 + 89) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (std::rand() % 400 + 800);
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay));
+    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
     if (is_pull)
         pull();
 }

@@ -12,7 +12,7 @@ std::string conv_between(const char *text, const std::string &to_encoding, const
     const int BUFFER_SIZE = 1024;
     /* iconv_open */
     iconv_t cd = iconv_open(to_encoding.c_str(), from_encoding.c_str());
-    if (cd == (iconv_t) - 1) {
+    if (cd == (iconv_t) -1) {
         perror("iconv_open");
         throw std::runtime_error("iconv_open");
     }
@@ -120,7 +120,7 @@ Json::Value parse(const std::string &s) {
     return json;
 }
 
-std::string dump(const Json::Value &value){
+std::string dump(const Json::Value &value) {
     Json::StreamWriterBuilder builder;
     builder["indentation"] = "";
     builder["commentStyle"] = "None";
