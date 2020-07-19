@@ -16,7 +16,9 @@
 
    - 连接模拟器
 
-     推荐使用[MuMu模拟器](http://mumu.163.com/)。如果一定要用[夜神模拟器](https://www.yeshen.com/)，安装[夜神模拟器](https://www.yeshen.com/)后，记得将目录[Nox\bin]下的文件[adb.exe]和[nox_adb.exe]用本项目的[[adb.exe](bin)]替换，以保持版本一致
+     [夜神模拟器](https://www.yeshen.com/)，安装[夜神模拟器](https://www.yeshen.com/)后，记得将目录[Nox\bin]下的文件[adb.exe]和[nox_adb.exe]用本项目的[[adb.exe](bin)]替换，以保持版本一致
+
+     [MuMu模拟器](http://mumu.163.com/)，现阶段发现一些问题，不建议使用
 
 3. 在安卓系统中安装[ADBKeyboard](bin)，用于中文输入
 

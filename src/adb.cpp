@@ -22,7 +22,7 @@ int c2i(char c) {
 }
 
 adb::adb() {
-    system("adb disconnect 1>nul 2>nul");
+    system("adb disconnect 1>nul");
 }
 
 adb::~adb() {
@@ -122,9 +122,10 @@ void adb::read() {
             std::copy_if(xpath_nodes.begin(), xpath_nodes.end(), std::back_inserter(valid_xpath_nodes), [this, &titles](const pugi::xpath_node &xpath_node) {
                 auto node = xpath_node.node();
                 std::string bounds = node.attribute("bounds").value();
-                int x, y;
-                getxy(x, y, bounds, 1, 1, 0, 1);
-                return std::find(titles.begin(), titles.end(), this->get_text(node)) == titles.end() && y != 0 && y != height;
+                int x, y1, y2;
+                getxy(x, y1, bounds, 1, 1, 1, 0);
+                getxy(x, y2, bounds, 1, 1, 0, 1);
+                return std::find(titles.begin(), titles.end(), this->get_text(node)) == titles.end() && y2 - y1 > 3;
             });
             logger->info("[学习文章]：发现 {} 篇文章", valid_xpath_nodes.size());
             bool is_left = false;
@@ -220,9 +221,10 @@ void adb::listen() {
             std::copy_if(xpath_nodes.begin(), xpath_nodes.end(), std::back_inserter(valid_xpath_nodes), [this, &titles](const pugi::xpath_node &xpath_node) {
                 auto node = xpath_node.node();
                 std::string bounds = node.attribute("bounds").value();
-                int x, y;
-                getxy(x, y, bounds, 1, 1, 0, 1);
-                return std::find(titles.begin(), titles.end(), this->get_text(node)) == titles.end() && y != 0 && y != height;
+                int x, y1, y2;
+                getxy(x, y1, bounds, 1, 1, 1, 0);
+                getxy(x, y2, bounds, 1, 1, 0, 1);
+                return std::find(titles.begin(), titles.end(), this->get_text(node)) == titles.end() && y2 - y1 > 3;
             });
             logger->info("[视听学习]：发现 {} 个视听", valid_xpath_nodes.size());
             bool is_left = false;
@@ -282,9 +284,10 @@ void adb::daily() {
     for (;;) {
         node = select("//node[@class='android.widget.ListView']/node[@index='5']/node[@index='3']");
         std::string bounds = node.attribute("bounds").value();
-        int x, y;
-        getxy(x, y, bounds, 1, 1, 0, 1);
-        if (y != 0 && y != height) {
+        int x, y1, y2;
+        getxy(x, y1, bounds, 1, 1, 1, 0);
+        getxy(x, y2, bounds, 1, 1, 0, 1);
+        if (y2 - y1 > 3) {
             logger->info("[去答题]");
             tap(node, 10);
             pull();
@@ -315,13 +318,30 @@ void adb::daily() {
             }
             std::cout << std::endl;
             logger->info("[{}] {}. {}", type, i, utf2gbk(content_utf));
+
             xpath_nodes = ui.select_nodes("//node[@class='android.widget.EditText']/following-sibling::node[1]");
-            for (auto &xpath_node : xpath_nodes) {
-                tap(xpath_node.node(), 0, false);
-                input_text("不忘初心牢记使命");
-                logger->info("[默认答案]：不忘初心牢记使命");
+            std::list<int> answer_indexs;
+            for (unsigned answer_index = 0; answer_index < xpath_nodes.size(); answer_index++)
+                answer_indexs.push_back(answer_index);
+            for (int answer_index : answer_indexs) {
+                for (;;) {
+                    auto node = xpath_nodes[answer_index].node();
+                    int x, y1, y2;
+                    getxy(x, y1, node.attribute("bounds").value(), 1, 1, 1, 0);
+                    getxy(x, y2, node.attribute("bounds").value(), 1, 1, 0, 1);
+                    if (y2 - y1 > 3) {
+                        tap(node, 0, false);
+                        input_text("不忘初心牢记使命");
+                        logger->info("[默认答案]：不忘初心牢记使命");
+                        break;
+                    }
+                    logger->warn("Can't see any blank!");
+                    swipe_up();
+                    xpath_nodes = ui.select_nodes("//node[@class='android.widget.EditText']/following-sibling::node[1]");
+                }
             }
         } else if (type == "单选题" || type == "多选题") {
+            std::cout << std::endl;
             auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
             std::string content_utf;
             for (auto &xpath_node : xpath_nodes) {
@@ -329,27 +349,13 @@ void adb::daily() {
                 content_utf += xpath_node.node().attribute("content-desc").value();
                 // 华为真机和360真机的界面xml，8个0xc20xa0前面多个空格0x20，而MuMu模拟器的界面xml，只有8个0xc20xa0，前面没有空格\x20
                 // 参考[https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=dec]: U+00A0 194(0xc2) 160(0xa0) NO-BREAK SPACE
+                if (std::regex_search(content_utf, std::regex("\x20((\\xc2\\xa0){8})")))
+                    logger->warn("More SPACE(0x20) before NO-BREAK SPACE(0xC2A0)!");
                 content_utf = std::regex_replace(content_utf, std::regex("\x20((\\xc2\\xa0){8})"), "$1");
             }
-            std::cout << std::endl;
             logger->info("[{}] {}. {}", type, i, utf2gbk(content_utf));
 
-            // 确保最后一个选项没有被挡住
-            for (;;) {
-                auto listview_node = select("//node[@class='android.widget.ListView']/..");
-                int listview_x, listview_y;
-                getxy(listview_x, listview_y, listview_node.attribute("bounds").value(), 1, 1, 0, 1);
-
-                xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/node//node[@index='2']");
-                auto node = xpath_nodes[xpath_nodes.size() - 1].node();
-                std::string bounds = node.attribute("bounds").value();
-                int x, y;
-                getxy(x, y, bounds, 1, 1, 0, 1);
-                if (y != 0 && y != listview_y)
-                    break;
-                swipe_up();
-            }
-
+            xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/node//node[@index='2']");
             std::string options_utf;
             char mark = 'A';
             for (auto &xpath_node : xpath_nodes) {
@@ -363,6 +369,7 @@ void adb::daily() {
             }
             options_utf = options_utf.substr(0, options_utf.size() - 24);
 
+            std::list<int> answer_indexs;
             if (type == "单选题") {
                 auto result = db.get_answer("challenge", content_utf, options_utf);
                 logger->info("[答案提示]：{}", dump(result));
@@ -370,7 +377,7 @@ void adb::daily() {
                 auto notanswer = result["notanswer"].asString();
                 if (answer.size()) {
                     logger->info("[自动答案]：{}", answer);
-                    tap(xpath_nodes[c2i(answer[0])].node(), 0, false);
+                    answer_indexs.push_back(c2i(answer[0]));
                 } else {
                     if (notanswer.size() >= xpath_nodes.size())
                         throw std::runtime_error("数据库非答案有误");
@@ -379,19 +386,32 @@ void adb::daily() {
                         answer_index = rand() % xpath_nodes.size();
                     } while (notanswer.find(i2c(answer_index)) != std::string::npos);
                     logger->info("[随机答案]：{}", i2c(answer_index));
-                    tap(xpath_nodes[answer_index].node(), 0, false);
+                    answer_indexs.push_back(answer_index);
                 }
             } else if (type == "多选题") {
                 logger->info("[默认答案]：全选");
-                for (auto &xpath_node : xpath_nodes)
-                    tap(xpath_node.node(), 0, false);
+                for (unsigned answer_index = 0; answer_index < xpath_nodes.size(); answer_index++)
+                    answer_indexs.push_back(answer_index);
+            }
+
+            for (int answer_index : answer_indexs) {
+                for (;;) {
+                    auto node = xpath_nodes[answer_index].node();
+                    int x, y1, y2;
+                    getxy(x, y1, node.attribute("bounds").value(), 1, 1, 1, 0);
+                    getxy(x, y2, node.attribute("bounds").value(), 1, 1, 0, 1);
+                    if (y2 - y1 > 3) {
+                        tap(node, 0, false);
+                        break;
+                    }
+                    swipe_up();
+                    xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/node//node[@index='2']");
+                }
             }
         } else
             throw std::runtime_error("[每日答题] 未知题型：" + type);
 
         pull();
-        if (!exist_with_text("确定"))
-            logger->warn("答案没上屏！可能因为字体太大，选项超出屏幕范围，请尝试调整字体大小。");
         tap(select_with_text("确定"), 1, false);
         tap(select_with_text("确定"));
 
@@ -438,9 +458,10 @@ void adb::challenge(int max) {
     for (;;) {
         node = select("//node[@class='android.widget.ListView']/node[@index='8']/node[@index='3']");
         std::string bounds = node.attribute("bounds").value();
-        int x, y;
-        getxy(x, y, bounds, 1, 1, 0, 1);
-        if (y != 0 && y != height) {
+        int x, y1, y2;
+        getxy(x, y1, bounds, 1, 1, 1, 0);
+        getxy(x, y2, bounds, 1, 1, 0, 1);
+        if (y2 - y1 > 3) {
             logger->info("[去看看]");
             tap(node, 10);
             pull();
@@ -450,6 +471,7 @@ void adb::challenge(int max) {
     }
 
     for (int i = 1;; i++) {
+        std::cout << std::endl;
         auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
 
         // 题干
@@ -459,29 +481,15 @@ void adb::challenge(int max) {
             content_utf += xpath_node.node().attribute("content-desc").value();
             // 华为真机和360真机的界面xml，8个0xc20xa0前面多个空格0x20，而MuMu模拟器的界面xml，只有8个0xc20xa0，前面没有空格\x20
             // 参考[https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=dec]: U+00A0 194(0xc2) 160(0xa0) NO-BREAK SPACE
+            if (std::regex_search(content_utf, std::regex("\x20((\\xc2\\xa0){8})")))
+                logger->warn("More SPACE(0x20) before NO-BREAK SPACE(0xC2A0)!");
             content_utf = std::regex_replace(content_utf, std::regex("\x20((\\xc2\\xa0){8})"), "$1");
         }
 
-        std::cout << std::endl;
         logger->info("[挑战答题] {}. {}", i, utf2gbk(content_utf));
 
-        // 确保最后一个选项没有被挡住
-        for (;;) {
-            auto listview_node = select("//node[@class='android.widget.ListView']/..");
-            int listview_x, listview_y;
-            getxy(listview_x, listview_y, listview_node.attribute("bounds").value(), 1, 1, 0, 1);
-
-            xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/node//node[@index='1']");
-            auto node = xpath_nodes[xpath_nodes.size() - 1].node();
-            std::string bounds = node.attribute("bounds").value();
-            int x, y;
-            getxy(x, y, bounds, 1, 1, 0, 1);
-            if (y != 0 && y != listview_y)
-                break;
-            swipe_up();
-        }
-
         // 选项
+        xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/node//node[@index='1']");
         std::string options_utf;
         char mark = 'A';
         for (auto &xpath_node : xpath_nodes) {
@@ -499,25 +507,36 @@ void adb::challenge(int max) {
         logger->info("[答案提示]：{}", dump(result));
         auto answer = result["answer"].asString();
         auto notanswer = result["notanswer"].asString();
+        int answer_index;
         if (answer.size()) {
             logger->info("[自动答案]：{}", answer);
-            tap(xpath_nodes[c2i(answer[0])].node(), 3);
+            answer_index = c2i(answer[0]);
         } else {
             if (notanswer.size() >= xpath_nodes.size())
                 throw std::runtime_error("数据库非答案有误");
-            int answer_index;
             do {
                 answer_index = rand() % xpath_nodes.size();
             } while (notanswer.find(i2c(answer_index)) != std::string::npos);
             logger->info("[随机答案]：{}", i2c(answer_index));
-            tap(xpath_nodes[answer_index].node(), 3);
+        }
+        for (;;) {
+            auto node = xpath_nodes[answer_index].node();
+            int x, y1, y2;
+            getxy(x, y1, node.attribute("bounds").value(), 1, 1, 1, 0);
+            getxy(x, y2, node.attribute("bounds").value(), 1, 1, 0, 1);
+            if (y2 - y1 > 3) {
+                tap(node, 3);
+                break;
+            }
+            swipe_up();
+            xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/node//node[@index='1']");
         }
 
         // 如果因为字体太大点空了，则自动休息30秒，等待自行结束
         std::ostringstream oss;
         oss << i << " /10";
         if (exist_with_text(oss.str())) {
-            logger->warn("答案没上屏！可能因为字体太大，选项超出屏幕范围，请尝试调整字体大小。");
+            logger->warn("No answer response!");
             std::this_thread::sleep_for(std::chrono::seconds(30));
         }
 
@@ -574,7 +593,7 @@ void adb::tap(int x, int y, int64_t delay, bool is_pull) {
     std::ostringstream oss;
     oss << "adb shell input tap " << x << " " << y;
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
+    std::this_thread::sleep_for(std::chrono::seconds(delay));
     if (is_pull)
         pull();
 }
@@ -591,7 +610,7 @@ void adb::swipe_up(int64_t delay, bool is_pull) {
     std::ostringstream oss;
     oss << "adb shell input swipe " << (width * (std::rand() % 10 + 55) / 100.0) << " " << (height * (std::rand() % 10 + 65) / 100.0) << " " << (width * (std::rand() % 10 + 55) / 100.0) << " " << (height * (std::rand() % 10 + 25) / 100.0) << " " << (std::rand() % 400 + 800);
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
+    std::this_thread::sleep_for(std::chrono::seconds(delay));
     if (is_pull)
         pull();
 }
@@ -601,7 +620,7 @@ void adb::swipe_down(int64_t delay, bool is_pull) {
     std::ostringstream oss;
     oss << "adb shell input swipe " << (width * (std::rand() % 10 + 55) / 100.0) << " " << (height * (std::rand() % 10 + 25) / 100.0) << " " << (width * (std::rand() % 10 + 55) / 100.0) << " " << (height * (std::rand() % 10 + 65) / 100.0) << " " << (std::rand() % 400 + 800);
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
+    std::this_thread::sleep_for(std::chrono::seconds(delay));
     if (is_pull)
         pull();
 }
@@ -609,9 +628,9 @@ void adb::swipe_down(int64_t delay, bool is_pull) {
 // 左滑
 void adb::swipe_left(int64_t delay, bool is_pull) {
     std::ostringstream oss;
-    oss << "adb shell input swipe " << (width * (std::rand() % 9 + 89) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (width * (std::rand() % 10 + 1) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (std::rand() % 400 + 800);
+    oss << "adb shell input swipe " << (width * (std::rand() % 9 + 80) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (width * (std::rand() % 10 + 10) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (std::rand() % 400 + 800);
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
+    std::this_thread::sleep_for(std::chrono::seconds(delay));
     if (is_pull)
         pull();
 }
@@ -619,9 +638,9 @@ void adb::swipe_left(int64_t delay, bool is_pull) {
 // 右滑
 void adb::swipe_right(int64_t delay, bool is_pull) {
     std::ostringstream oss;
-    oss << "adb shell input swipe " << (width * (std::rand() % 10 + 1) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (width * (std::rand() % 9 + 89) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (std::rand() % 400 + 800);
+    oss << "adb shell input swipe " << (width * (std::rand() % 10 + 10) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (width * (std::rand() % 9 + 80) / 100.0) << " " << (height * (std::rand() % 14 + 75) / 100.0) << " " << (std::rand() % 400 + 800);
     exec(oss.str());
-    std::this_thread::sleep_for(std::chrono::seconds(delay + std::rand() % 2));
+    std::this_thread::sleep_for(std::chrono::seconds(delay));
     if (is_pull)
         pull();
 }
