@@ -21,10 +21,15 @@ database::~database(void) {
 
 void write_file(const std::string& file_name, const std::string& s);
 Json::Value database::get_answer(const std::string& type, const std::string& content, const std::string& options) {
-    std::ostringstream sql;
-    sql << "select answer, notanswer from quiz where type='" << type << "' and content='" << content << "' and options='" << options << "'";
-    write_file("log/sql.txt", sql.str());
-    return get_items(sql.str())[0];
+    //std::ostringstream sql;
+    //sql << "select answer, notanswer from quiz where type='" << type << "' and content='" << content << "' and options='" << options << "'";
+    //write_file("log/sql.txt", sql.str());
+    //return get_items(sql.str())[0];
+    auto sql = sqlite3_mprintf("select answer, notanswer from quiz where type='%q' and content='%q' and options='%q'", type.c_str(), content.c_str(), options.c_str());
+    write_file("log/sql.txt", sql);
+    auto result = get_items(sql)[0];
+    sqlite3_free(sql);
+    return result;
 }
 
 void database::execute(const std::string &sql) {

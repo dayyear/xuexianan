@@ -351,7 +351,9 @@ void adb::daily() {
                 // 参考[https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=dec]: U+00A0 194(0xc2) 160(0xa0) NO-BREAK SPACE
                 if (std::regex_search(content_utf, std::regex("\x20((\\xc2\\xa0){8})")))
                     logger->warn("More SPACE(0x20) before NO-BREAK SPACE(0xC2A0)!");
-                content_utf = std::regex_replace(content_utf, std::regex("\x20((\\xc2\\xa0){8})"), "$1");
+                //content_utf = std::regex_replace(content_utf, std::regex("\x20((\\xc2\\xa0){8})"), "$1");
+                //content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
+                content_utf = std::regex_replace(content_utf, std::regex("\\s"), "");
             }
             logger->info("[{}] {}. {}", type, i, utf2gbk(content_utf));
 
@@ -365,9 +367,11 @@ void adb::daily() {
                 option_utf += xpath_node.node().attribute("text").value();
                 option_utf += xpath_node.node().attribute("content-desc").value();
                 logger->info(utf2gbk(option_utf));
-                options_utf += option_utf + "'||CHAR(13)||CHAR(10)||'";
+                //options_utf += option_utf + "'||CHAR(13)||CHAR(10)||'";
+                options_utf += option_utf + "\r\n";
             }
-            options_utf = options_utf.substr(0, options_utf.size() - 24);
+            //options_utf = options_utf.substr(0, options_utf.size() - 24);
+            options_utf = options_utf.substr(0, options_utf.size() - 2);
 
             std::list<int> answer_indexs;
             if (type == "单选题") {
@@ -483,7 +487,9 @@ void adb::challenge(int max) {
             // 参考[https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=dec]: U+00A0 194(0xc2) 160(0xa0) NO-BREAK SPACE
             if (std::regex_search(content_utf, std::regex("\x20((\\xc2\\xa0){8})")))
                 logger->warn("More SPACE(0x20) before NO-BREAK SPACE(0xC2A0)!");
-            content_utf = std::regex_replace(content_utf, std::regex("\x20((\\xc2\\xa0){8})"), "$1");
+            //content_utf = std::regex_replace(content_utf, std::regex("\x20((\\xc2\\xa0){8})"), "$1");
+            //content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
+            content_utf = std::regex_replace(content_utf, std::regex("\\s"), "");
         }
 
         logger->info("[挑战答题] {}. {}", i, utf2gbk(content_utf));
@@ -499,9 +505,11 @@ void adb::challenge(int max) {
             option_utf += xpath_node.node().attribute("text").value();
             option_utf += xpath_node.node().attribute("content-desc").value();
             logger->info(utf2gbk(option_utf));
-            options_utf += option_utf + "'||CHAR(13)||CHAR(10)||'";
+            //options_utf += option_utf + "'||CHAR(13)||CHAR(10)||'";
+            options_utf += option_utf + "\r\n";
         }
-        options_utf = options_utf.substr(0, options_utf.size() - 24);
+        //options_utf = options_utf.substr(0, options_utf.size() - 24);
+        options_utf = options_utf.substr(0, options_utf.size() - 2);
 
         auto result = db.get_answer(i <= max ? "challenge" : "max", content_utf, options_utf);
         logger->info("[答案提示]：{}", dump(result));
