@@ -69,14 +69,14 @@ std::string gbk2utf(const std::string &s) {
     return gbk2utf(s.c_str());
 }
 
-std::string read_file(const std::string& file_name) {
+std::string read_file(const std::string &file_name) {
     std::ifstream file(file_name, std::ios::binary | std::ios::in);
     std::string s((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
     return s;
 }
 
-void write_file(const std::string& file_name, const std::string& s) {
+void write_file(const std::string &file_name, const std::string &s) {
     std::ofstream file(file_name, std::ios::binary | std::ios::out);
     file << s;
     file.close();

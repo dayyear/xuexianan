@@ -8,8 +8,8 @@ std::string gbk2utf(const char *s);
 std::string gbk2utf(const std::string &s);
 
 // 文本文件读写
-std::string read_file(const std::string& file_name);
-void write_file(const std::string& file_name, const std::string& s);
+std::string read_file(const std::string &file_name);
+void write_file(const std::string &file_name, const std::string &s);
 
 // trim
 void ltrim(std::string &s);

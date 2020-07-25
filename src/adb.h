@@ -15,18 +15,21 @@ public:
     adb();
     virtual ~adb();
 
+    // 学习前准备
     void connect(const std::string &ip, unsigned short port);
     void init();
 
+    // 各种学习
     void read();
     void listen();
-    void daily();
-    void challenge(int max);
+    void daily(bool is_training = false);
+    void challenge(int max = 10);
 
-private:
     // 导航
     void back(int64_t delay = 2, bool is_pull = true);
     void score();
+
+private:
 
     // 人工操作
     void tap(int x, int y, int64_t delay = 2, bool is_pull = true);
@@ -38,16 +41,16 @@ private:
 
     // adb底层命令
     void pull();
-    void input_text(const std::string& msg);
+    void input_text(const std::string &msg);
     std::string exec(const std::string &cmd);
 
     // 辅助函数
-    void getxy(int &x, int& y, const std::string& bounds, int dx1 = 1, int dx2 = 1, int dy1 = 1, int dy2 = 1);
-    pugi::xml_node select_with_text(const std::string& text);
-    bool exist_with_text(const std::string& text);
-    pugi::xml_node select(const std::string& xpath);
-    bool exist(const std::string& xpath);
-    std::string get_text(const pugi::xml_node& node);
+    void getxy(int &x, int &y, const std::string &bounds, int dx1 = 1, int dx2 = 1, int dy1 = 1, int dy2 = 1);
+    pugi::xml_node select_with_text(const std::string &text);
+    bool exist_with_text(const std::string &text);
+    pugi::xml_node select(const std::string &xpath);
+    bool exist(const std::string &xpath);
+    std::string get_text(const pugi::xml_node &node);
 
 };
 

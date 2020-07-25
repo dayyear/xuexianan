@@ -32,10 +32,11 @@ int main() {
             adb adb;
             std::cout << std::endl;
             logger->info("-------- [学习安安：v2.14.1] --------");
-            logger->info("主菜单");
+            logger->info("[主菜单]");
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "1" << " - " << "连接安卓手机" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(8) << " " << "* 用USB线连接安卓手机，记得打开安卓系统的USB调试模式" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "2" << " - " << "连接MuMu模拟器" << std::endl;
+            std::cout << setiosflags(std::ios::right) << std::setw(8) << " " << "* 需要设置最小字体，字体太大时不稳定" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "3" << " - " << "连接夜神模拟器" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(8) << " " << "* 安装夜神模拟器后，记得将目录[Nox\\bin]下的文件[adb.exe]和[nox_adb.exe]用本项目的[adb.exe]替换，以保持版本一致" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "Q" << " - " << "退出" << std::endl;
@@ -48,6 +49,12 @@ int main() {
             } else if (arg == "Q" || arg == "q") {
                 logger->info("退出");
                 break;
+            } else if (arg == "T" || arg == "t") {
+                adb.connect("127.0.0.1", 62001);
+                logger->info("[题库训练]");
+                adb.init();
+                adb.daily(1);
+                break;
             } else {
                 logger->warn("无效输入: {}", arg);
                 continue;
@@ -57,7 +64,8 @@ int main() {
             adb.read();
             adb.listen();
             adb.daily();
-            adb.challenge(20);
+            adb.challenge();
+            adb.score();
             auto time_end = clock();
             logger->info("用时 {:.1f} 分钟。学习安安，享受生活！", (float) (time_end - time_start) / CLOCKS_PER_SEC / 60);
         } catch (const std::exception &ex) {

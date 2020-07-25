@@ -1,6 +1,7 @@
 #include <sqlite3.h>
 #include <iostream>
 #include <sstream>
+#include <ctime>
 #include <json/writer.h>
 #include <json/reader.h>
 
@@ -19,17 +20,37 @@ database::~database(void) {
     sqlite3_close(db);
 } //database::~database
 
-void write_file(const std::string& file_name, const std::string& s);
-Json::Value database::get_answer(const std::string& type, const std::string& content, const std::string& options) {
-    //std::ostringstream sql;
-    //sql << "select answer, notanswer from quiz where type='" << type << "' and content='" << content << "' and options='" << options << "'";
-    //write_file("log/sql.txt", sql.str());
-    //return get_items(sql.str())[0];
+Json::Value database::groupby_type(){
+    return get_items("select type, count(*) c from quiz group by type order by type");
+}
+
+void write_file(const std::string &file_name, const std::string &s);
+Json::Value database::get_answer(const std::string &type, const std::string &content, const std::string &options) {
     auto sql = sqlite3_mprintf("select answer, notanswer from quiz where type='%q' and content='%q' and options='%q'", type.c_str(), content.c_str(), options.c_str());
     write_file("log/sql.txt", sql);
     auto result = get_items(sql)[0];
     sqlite3_free(sql);
     return result;
+}
+
+int database::insert_or_update_answer(const std::string &type, const std::string &content, const std::string &options, const std::string &answer) {
+    // https://www.runoob.com/cprogramming/c-function-strftime.html
+    time_t rawtime;
+    char buffer[80];
+    time(&rawtime);
+    std::strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", std::localtime(&rawtime));
+
+    auto result = get_answer(type, content, options);
+    std::string sql;
+    if (result.isNull())
+        sql = sqlite3_mprintf("insert into quiz(type, content, options, answer, time) values('%q', '%q', '%q', '%q', '%q')", type.c_str(), content.c_str(), options.c_str(), answer.c_str(), buffer);
+    else if (result["answer"].asString() != answer)
+        sql = sqlite3_mprintf("update quiz set answer='%q', time='%q' where type='%q' and content='%q' and options='%q'", answer.c_str(), buffer, type.c_str(), content.c_str(), options.c_str());
+    if (sql.size()) {
+        execute(sql);
+        return 1;
+    }
+    return 0;
 }
 
 void database::execute(const std::string &sql) {

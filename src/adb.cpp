@@ -60,6 +60,10 @@ void adb::init() {
     }
     getxy(back_x, back_y, node.attribute("bounds").value(), 33, 10);
     logger->debug("返回按钮：({},{})", back_x, back_y);
+
+    // [{"c":"1575","type":"blank"},{"c":"1065","type":"challenge"},{"c":"1100","type":"multiple"},{"c":"921","type":"single"}]
+    auto groupby_type = db.groupby_type();
+    logger->info("[题库统计]：单选题 {}；多选题 {}；填空题 {}", groupby_type[3]["c"].asString(), groupby_type[2]["c"].asString(), groupby_type[0]["c"].asString());
 }
 
 // 学习文章
@@ -256,7 +260,7 @@ void adb::listen() {
 } //listen()
 
 // 每日答题
-void adb::daily() {
+void adb::daily(bool is_training) {
     int score5;
     std::smatch sm;
     pugi::xml_node node;
@@ -273,56 +277,80 @@ void adb::daily() {
     score5 = atoi(sm[1].str().c_str());
     logger->info("[每日答题]：已获{}分/每日上限6分", score5);
 
-    if (score5 >= 6) {
-        logger->info("[返回]");
+    if (is_training) {
         back();
-        back();
-        return;
-    }
-
-    // 去答题
-    for (;;) {
-        node = select("//node[@class='android.widget.ListView']/node[@index='5']/node[@index='3']");
-        std::string bounds = node.attribute("bounds").value();
-        int x, y1, y2;
-        getxy(x, y1, bounds, 1, 1, 1, 0);
-        getxy(x, y2, bounds, 1, 1, 0, 1);
-        if (y2 - y1 > 3) {
-            logger->info("[去答题]");
-            tap(node, 10);
-            pull();
-            break;
+        logger->info("[我要答题]");
+        tap(select_with_text("我要答题"), 10);
+        logger->info("[每日答题]");
+        tap(select_with_text("每日答题"), 10);
+    } else {
+        if (score5 >= 6) {
+            logger->info("[返回]");
+            back();
+            back();
+            return;
         }
-        swipe_up();
+        for (;;) {
+            node = select("//node[@class='android.widget.ListView']/node[@index='5']/node[@index='3']");
+            std::string bounds = node.attribute("bounds").value();
+            int x, y1, y2;
+            getxy(x, y1, bounds, 1, 1, 1, 0);
+            getxy(x, y2, bounds, 1, 1, 0, 1);
+            if (y2 - y1 > 3) {
+                logger->info("[去答题]");
+                tap(node, 10);
+                pull();
+                break;
+            }
+            swipe_up();
+        }
     }
 
     for (int i = 1;; i++) {
         auto type = get_text(select("//node[@text='填空题' or @text='单选题' or @text='多选题' or @content-desc='填空题' or @content-desc='单选题' or @content-desc='多选题']"));
-        //ui.save_file(("log/MuMU-" + std::to_string(i) + "-" + type + ".xml").c_str());
+        //ui.save_file(("log/每日答题/夜神-" + std::to_string(i) + "-" + type + ".xml").c_str());
+        std::string content_utf, options_utf, answer;
         if (type == "填空题") {
-            // 华为真机、360真机
-            auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.EditText']/../../node");
-            std::string content_utf;
+            std::cout << std::endl;
+            // 华为真机、360真机、夜神模拟器
+            auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.EditText']/../..//node[@class='android.view.View'][count(*)=0]");
             for (auto &xpath_node : xpath_nodes) {
-                content_utf += xpath_node.node().attribute("text").value();
-                content_utf += xpath_node.node().attribute("content-desc").value();
+                std::string text;
+                text += xpath_node.node().attribute("text").value();
+                text += xpath_node.node().attribute("content-desc").value();
+                text = std::regex_replace(text, std::regex("\\s"), "");
+                if (text.size())
+                    content_utf += text;
+                else
+                    content_utf += "__";
             }
             // MuMu模拟器
-            if (content_utf.find(std::to_string((i - 1) % 10 + 1) + " /10") != std::string::npos) {
-                xpath_nodes = ui.select_nodes("//node[@class='android.widget.EditText']/../node");
+            if (content_utf.find(gbk2utf(type) + std::to_string((i - 1) % 10 + 1) + "/10") != std::string::npos) {
+                logger->warn("MuMu模拟器！");
+                xpath_nodes = ui.select_nodes("//node[@class='android.widget.EditText']/..//node[@class='android.view.View'][count(*)=0]");
                 content_utf.clear();
                 for (auto &xpath_node : xpath_nodes) {
-                    content_utf += xpath_node.node().attribute("text").value();
-                    content_utf += xpath_node.node().attribute("content-desc").value();
+                    std::string text;
+                    text += xpath_node.node().attribute("text").value();
+                    text += xpath_node.node().attribute("content-desc").value();
+                    text = std::regex_replace(text, std::regex("\\s"), "");
+                    if (text.size())
+                        content_utf += text;
+                    else
+                        content_utf += "__";
                 }
             }
-            std::cout << std::endl;
             logger->info("[{}] {}. {}", type, i, utf2gbk(content_utf));
+
+            auto result = db.get_answer("blank", content_utf, options_utf);
+            auto answer_db = result["answer"].asString();
+            answer = answer_db.size() ? utf2gbk(answer_db) : "不忘初心牢记使命敢于担当";
 
             xpath_nodes = ui.select_nodes("//node[@class='android.widget.EditText']/following-sibling::node[1]");
             std::list<int> answer_indexs;
             for (unsigned answer_index = 0; answer_index < xpath_nodes.size(); answer_index++)
                 answer_indexs.push_back(answer_index);
+            int substr_index = 0;
             for (int answer_index : answer_indexs) {
                 for (;;) {
                     auto node = xpath_nodes[answer_index].node();
@@ -331,8 +359,19 @@ void adb::daily() {
                     getxy(x, y2, node.attribute("bounds").value(), 1, 1, 0, 1);
                     if (y2 - y1 > 3) {
                         tap(node, 0, false);
-                        input_text("不忘初心牢记使命");
-                        logger->info("[默认答案]：不忘初心牢记使命");
+                        int substr_size = 0, word_index = 0;
+                        do {
+                            substr_size++;
+                            word_index++;
+                            if (answer[substr_index] & 0x80)
+                                substr_size++;
+                            std::string xpath = "(//node[@class='android.widget.EditText'])[" + std::to_string(answer_index + 1) + "]/following-sibling::node[" + std::to_string(word_index + 1) + "]";
+                            node = ui.select_node(xpath.c_str()).node();
+                        } while (!node.empty() && !get_text(node).size());
+                        logger->debug("substr_index = {}, substr_size = {}", substr_index, substr_size);
+                        input_text(answer.substr(substr_index, substr_size));
+                        logger->info("[提交答案]：{}", answer.substr(substr_index, substr_size));
+                        substr_index += substr_size;
                         break;
                     }
                     logger->warn("Can't see any blank!");
@@ -343,22 +382,19 @@ void adb::daily() {
         } else if (type == "单选题" || type == "多选题") {
             std::cout << std::endl;
             auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
-            std::string content_utf;
             for (auto &xpath_node : xpath_nodes) {
                 content_utf += xpath_node.node().attribute("text").value();
                 content_utf += xpath_node.node().attribute("content-desc").value();
-                // 华为真机和360真机的界面xml，8个0xc20xa0前面多个空格0x20，而MuMu模拟器的界面xml，只有8个0xc20xa0，前面没有空格\x20
+                // 华为真机、360真机、夜神模拟器的界面xml，8个0xc20xa0前面多个空格0x20，而MuMu模拟器的界面xml，只有8个0xc20xa0，前面没有空格\x20
                 // 参考[https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=dec]: U+00A0 194(0xc2) 160(0xa0) NO-BREAK SPACE
-                if (std::regex_search(content_utf, std::regex("\x20((\\xc2\\xa0){8})")))
-                    logger->warn("More SPACE(0x20) before NO-BREAK SPACE(0xC2A0)!");
-                //content_utf = std::regex_replace(content_utf, std::regex("\x20((\\xc2\\xa0){8})"), "$1");
-                //content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
+                if (!std::regex_search(content_utf, std::regex("\x20((\\xc2\\xa0){8})")) && std::regex_search(content_utf, std::regex("(\\xc2\\xa0){8}")))
+                    logger->warn("MuMu模拟器！");
+                content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
                 content_utf = std::regex_replace(content_utf, std::regex("\\s"), "");
             }
             logger->info("[{}] {}. {}", type, i, utf2gbk(content_utf));
 
             xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/node//node[@index='2']");
-            std::string options_utf;
             char mark = 'A';
             for (auto &xpath_node : xpath_nodes) {
                 std::string option_utf;
@@ -375,30 +411,34 @@ void adb::daily() {
 
             std::list<int> answer_indexs;
             if (type == "单选题") {
-                auto result = db.get_answer("challenge", content_utf, options_utf);
+                auto result = db.get_answer("single", content_utf, options_utf);
                 logger->info("[答案提示]：{}", dump(result));
-                auto answer = result["answer"].asString();
-                auto notanswer = result["notanswer"].asString();
-                if (answer.size()) {
-                    logger->info("[自动答案]：{}", answer);
-                    answer_indexs.push_back(c2i(answer[0]));
+                auto answer_db = result["answer"].asString();
+                if (answer_db.size()) {
+                    logger->info("[提交答案]：{}", answer_db);
+                    answer_indexs.push_back(c2i(answer_db[0]));
                 } else {
-                    if (notanswer.size() >= xpath_nodes.size())
-                        throw std::runtime_error("数据库非答案有误");
-                    int answer_index;
-                    do {
-                        answer_index = rand() % xpath_nodes.size();
-                    } while (notanswer.find(i2c(answer_index)) != std::string::npos);
-                    logger->info("[随机答案]：{}", i2c(answer_index));
+                    int answer_index = rand() % xpath_nodes.size();
+                    logger->info("[提交答案]：{}", i2c(answer_index));
                     answer_indexs.push_back(answer_index);
                 }
             } else if (type == "多选题") {
-                logger->info("[默认答案]：全选");
-                for (unsigned answer_index = 0; answer_index < xpath_nodes.size(); answer_index++)
-                    answer_indexs.push_back(answer_index);
+                auto result = db.get_answer("multiple", content_utf, options_utf);
+                logger->info("[答案提示]：{}", dump(result));
+                auto answer_db = result["answer"].asString();
+                if (answer_db.size()) {
+                    logger->info("[提交答案]：{}", answer_db);
+                    for (auto c : answer_db)
+                        answer_indexs.push_back(c2i(c));
+                } else {
+                    logger->info("[提交答案]：全选");
+                    for (unsigned answer_index = 0; answer_index < xpath_nodes.size(); answer_index++)
+                        answer_indexs.push_back(answer_index);
+                }
             }
 
             for (int answer_index : answer_indexs) {
+                answer += i2c(answer_index);
                 for (;;) {
                     auto node = xpath_nodes[answer_index].node();
                     int x, y1, y2;
@@ -415,13 +455,47 @@ void adb::daily() {
         } else
             throw std::runtime_error("[每日答题] 未知题型：" + type);
 
+        // 正确答案
         pull();
-        tap(select_with_text("确定"), 1, false);
         tap(select_with_text("确定"));
+        auto xpath_answer_correct = "//node[starts-with(@text,'正确答案：') or starts-with(@content-desc,'正确答案：')]";
+        std::string answer_correct_utf;
+        if (!exist(xpath_answer_correct))
+            answer_correct_utf = gbk2utf(answer);
+        else {
+            answer_correct_utf = get_text(select(xpath_answer_correct));
+            answer_correct_utf = answer_correct_utf.substr(10);
+            answer_correct_utf = gbk2utf(answer_correct_utf);
+            trim(answer_correct_utf);
+            logger->info("[正确答案]：{}", utf2gbk(answer_correct_utf));
+        }
 
+        // 保存答案
+        if (type == "填空题")
+            type = "blank";
+        else if (type == "单选题")
+            type = "single";
+        else if (type == "多选题")
+            type = "multiple";
+        else
+            throw std::runtime_error("[每日答题] 未知题型：" + type);
+        if (is_training && (content_utf.size() + options_utf.size()))
+            if (db.insert_or_update_answer(type, content_utf, options_utf, answer_correct_utf)) {
+                logger->info("[保存答案至题库]");
+                auto groupby_type = db.groupby_type();
+                logger->info("[题库统计]：单选题 {}；多选题 {}；填空题 {}", groupby_type[3]["c"].asString(), groupby_type[2]["c"].asString(), groupby_type[0]["c"].asString());
+            }
+
+        // 下一题或完成
+        if (exist(xpath_answer_correct))
+            tap(select("//node[@text='下一题' or @text='完成' or @content-desc='下一题' or @content-desc='完成']"));
+
+        // 再来一组或返回
         if (i % 10 > 0)
             continue;
-        if (exist_with_text("领取奖励已达今日上限")) {
+
+        logger->info("[本次答对题目数]：{}", get_text(select("//node[@text='本次答对题目数' or @content-desc='本次答对题目数']/following-sibling::node[1]")));
+        if (!is_training && exist_with_text("领取奖励已达今日上限")) {
             logger->info("[领取奖励已达今日上限]");
             logger->info("[返回]");
             back();
@@ -430,7 +504,7 @@ void adb::daily() {
             return;
         }
         logger->info("[再来一组]");
-        tap(select_with_text("再来一组"));
+        tap(select_with_text("再来一组"), 10);
     }
 }
 
@@ -483,12 +557,7 @@ void adb::challenge(int max) {
         for (auto &xpath_node : xpath_nodes) {
             content_utf += xpath_node.node().attribute("text").value();
             content_utf += xpath_node.node().attribute("content-desc").value();
-            // 华为真机和360真机的界面xml，8个0xc20xa0前面多个空格0x20，而MuMu模拟器的界面xml，只有8个0xc20xa0，前面没有空格\x20
-            // 参考[https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=dec]: U+00A0 194(0xc2) 160(0xa0) NO-BREAK SPACE
-            if (std::regex_search(content_utf, std::regex("\x20((\\xc2\\xa0){8})")))
-                logger->warn("More SPACE(0x20) before NO-BREAK SPACE(0xC2A0)!");
-            //content_utf = std::regex_replace(content_utf, std::regex("\x20((\\xc2\\xa0){8})"), "$1");
-            //content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
+            content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
             content_utf = std::regex_replace(content_utf, std::regex("\\s"), "");
         }
 
@@ -505,27 +574,20 @@ void adb::challenge(int max) {
             option_utf += xpath_node.node().attribute("text").value();
             option_utf += xpath_node.node().attribute("content-desc").value();
             logger->info(utf2gbk(option_utf));
-            //options_utf += option_utf + "'||CHAR(13)||CHAR(10)||'";
             options_utf += option_utf + "\r\n";
         }
-        //options_utf = options_utf.substr(0, options_utf.size() - 24);
         options_utf = options_utf.substr(0, options_utf.size() - 2);
 
-        auto result = db.get_answer(i <= max ? "challenge" : "max", content_utf, options_utf);
+        auto result = db.get_answer(i <= max ? "single" : "max", content_utf, options_utf);
         logger->info("[答案提示]：{}", dump(result));
-        auto answer = result["answer"].asString();
-        auto notanswer = result["notanswer"].asString();
+        auto answer_db = result["answer"].asString();
         int answer_index;
-        if (answer.size()) {
-            logger->info("[自动答案]：{}", answer);
-            answer_index = c2i(answer[0]);
+        if (answer_db.size()) {
+            logger->info("[提交答案]：{}", answer_db);
+            answer_index = c2i(answer_db[0]);
         } else {
-            if (notanswer.size() >= xpath_nodes.size())
-                throw std::runtime_error("数据库非答案有误");
-            do {
-                answer_index = rand() % xpath_nodes.size();
-            } while (notanswer.find(i2c(answer_index)) != std::string::npos);
-            logger->info("[随机答案]：{}", i2c(answer_index));
+            answer_index = rand() % xpath_nodes.size();
+            logger->info("[提交答案]：{}", i2c(answer_index));
         }
         for (;;) {
             auto node = xpath_nodes[answer_index].node();
@@ -549,8 +611,7 @@ void adb::challenge(int max) {
         }
 
         if (exist_with_text("挑战结束")) {
-            node = select("//node[@text='挑战结束' or @content-desc='挑战结束']/following-sibling::node[1]");
-            text = get_text(node);
+            text = get_text(select("//node[@text='挑战结束' or @content-desc='挑战结束']/following-sibling::node[1]"));
             if (!std::regex_search(text, sm, std::regex("本次答对 (\\d+) 题")))
                 throw std::runtime_error("找不到[ 本次答对 (\\d+) 题 ]");
             score8 = atoi(sm[1].str().c_str());
@@ -558,7 +619,8 @@ void adb::challenge(int max) {
             logger->info("[结束本局]");
             tap(select_with_text("结束本局"));
 
-            if (score8 >= max) {
+            if (exist_with_text("领取奖励已达今日上限")) {
+                logger->info("[领取奖励已达今日上限]");
                 logger->info("[返回]");
                 back();
                 back();
@@ -567,7 +629,7 @@ void adb::challenge(int max) {
             }
 
             logger->info("[再来一局]");
-            tap(select_with_text("再来一局"));
+            tap(select_with_text("再来一局"), 10);
             i = 0;
             continue;
         }
@@ -682,7 +744,7 @@ std::string adb::exec(const std::string &cmd) {
     logger->debug("> " + cmd);
     system((cmd + " 1>log/adb.txt 2>log/err.txt").c_str());
     auto err = utf2gbk(trim_copy(read_file("log/err.txt")));
-    if (err.length())
+    if (err.size())
         throw std::runtime_error(err);
     return utf2gbk(trim_copy(read_file("log/adb.txt")));
 }
