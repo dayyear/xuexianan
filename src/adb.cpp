@@ -67,7 +67,7 @@ void adb::init() {
 }
 
 // 学习文章
-void adb::read() {
+void adb::read(bool is_ppp) {
     int score1, score3;
     std::smatch sm;
     pugi::xml_node node;
@@ -101,10 +101,36 @@ void adb::read() {
         logger->info("[文章学习时长]：已获{}分/每日上限6分", score3);
 
         if (score1 >= 6 && score3 >= 6) {
-            logger->info("[返回]");
-            back();
-            back();
-            return;
+            if (is_ppp) {
+                store();
+                logger->info("[点点通明细]");
+                tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+                auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='有效浏览' or @content-desc='有效浏览']/following-sibling::node[1]").c_str());
+                int ppp = 0;
+                for (auto &ppp_xpath : ppps_xpath) {
+                    auto text = get_text(ppp_xpath.node());
+                    if (!std::regex_search(text, sm, std::regex("\\+(\\d)点")))
+                        throw std::runtime_error("找不到[ 有效浏览 ]");
+                    ppp += atoi(sm[1].str().c_str());
+                }
+                logger->info("[有效浏览]：+{}点/每日上限12点", ppp);
+                if (ppp >= 12) {
+                    logger->info("[返回]");
+                    back(1, false);
+                    back(1, false);
+                    back(1, false);
+                    back();
+                    return;
+                } else {
+                    back(1, false);
+                    back();
+                }
+            } else {
+                logger->info("[返回]");
+                back(1, false);
+                back();
+                return;
+            }
         }
 
         // 计算平均每篇文章所需时长
@@ -153,7 +179,7 @@ void adb::read() {
                 c++;
                 back();
             }
-            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && titles.size() % 12 == 0)) {
+            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && titles.size() % 24 == 0)) {
                 swipe_left();
                 logger->info("[刷新]");
                 tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
@@ -166,7 +192,7 @@ void adb::read() {
 } //read()
 
 // 视听学习
-void adb::listen() {
+void adb::listen(bool is_ppp) {
     int score2, score4;
     std::smatch sm;
     pugi::xml_node node;
@@ -200,10 +226,36 @@ void adb::listen() {
         logger->info("[视听学习时长]：已获{}分/每日上限6分", score4);
 
         if (score2 >= 6 && score4 >= 6) {
-            logger->info("[返回]");
-            back();
-            back();
-            return;
+            if (is_ppp) {
+                store();
+                logger->info("[点点通明细]");
+                tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+                auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='有效视听' or @content-desc='有效视听']/following-sibling::node[1]").c_str());
+                int ppp = 0;
+                for (auto &ppp_xpath : ppps_xpath) {
+                    auto text = get_text(ppp_xpath.node());
+                    if (!std::regex_search(text, sm, std::regex("\\+(\\d)点")))
+                        throw std::runtime_error("找不到[ 有效视听 ]");
+                    ppp += atoi(sm[1].str().c_str());
+                }
+                logger->info("[有效视听]：+{}点/每日上限12点", ppp);
+                if (ppp >= 12) {
+                    logger->info("[返回]");
+                    back(1, false);
+                    back(1, false);
+                    back(1, false);
+                    back();
+                    return;
+                } else {
+                    back(1, false);
+                    back();
+                }
+            } else {
+                logger->info("[返回]");
+                back(1, false);
+                back();
+                return;
+            }
         }
 
         // 计算平均每个视听所需时长
@@ -246,7 +298,7 @@ void adb::listen() {
                 c++;
                 back();
             }
-            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && titles.size() % 12 == 0)) {
+            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && titles.size() % 24 == 0)) {
                 swipe_right();
                 logger->info("[刷新]");
                 tap(select_with_text("电视台"));
@@ -508,7 +560,7 @@ void adb::daily(bool is_training) {
     }
 }
 
-void adb::challenge(int max) {
+void adb::challenge(bool is_ppp) {
     int score8;
     std::smatch sm;
     pugi::xml_node node;
@@ -525,28 +577,49 @@ void adb::challenge(int max) {
     score8 = atoi(sm[1].str().c_str());
     logger->info("[挑战答题]：已获{}分/每日上限6分", score8);
 
+    int five;
     if (score8 >= 6) {
-        logger->info("[返回]");
-        back();
-        back();
-        return;
-    }
-
-    // 去看看
-    for (;;) {
-        node = select("//node[@class='android.widget.ListView']/node[@index='8']/node[@index='3']");
-        std::string bounds = node.attribute("bounds").value();
-        int x, y1, y2;
-        getxy(x, y1, bounds, 1, 1, 1, 0);
-        getxy(x, y2, bounds, 1, 1, 0, 1);
-        if (y2 - y1 > 3) {
-            logger->info("[去看看]");
-            tap(node, 10);
-            pull();
-            break;
+        if (is_ppp) {
+            store();
+            logger->info("[点点通明细]");
+            tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+            auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='挑战答题' or @content-desc='挑战答题']/following-sibling::node[1]").c_str());
+            int ppp = 0;
+            for (auto &ppp_xpath : ppps_xpath) {
+                auto text = get_text(ppp_xpath.node());
+                if (!std::regex_search(text, sm, std::regex("\\+(\\d)点")))
+                    throw std::runtime_error("找不到[ 挑战答题 ]");
+                ppp += atoi(sm[1].str().c_str());
+            }
+            logger->info("[挑战答题]：+{}点/每日上限9点", ppp);
+            if (ppp >= 9) {
+                logger->info("[返回]");
+                back(1, false);
+                back(1, false);
+                back(1, false);
+                back();
+                return;
+            } else {
+                back(1, false);
+                back();
+                five = (9 - ppp) / 3;
+            }
+        } else {
+            logger->info("[返回]");
+            back(1, false);
+            back();
+            return;
         }
-        swipe_up();
+    } else {
+        five = (6 - score8) / 3 + (is_ppp ? 1 : 0);
     }
+    logger->debug("five: {}", five);
+
+    back();
+    logger->info("[我要答题]");
+    tap(select_with_text("我要答题"), 10);
+    logger->info("[挑战答题]");
+    tap(select_with_text("挑战答题"), 10);
 
     for (int i = 1;; i++) {
         std::cout << std::endl;
@@ -578,7 +651,7 @@ void adb::challenge(int max) {
         }
         options_utf = options_utf.substr(0, options_utf.size() - 2);
 
-        auto result = db.get_answer(i <= max ? "single" : "max", content_utf, options_utf);
+        auto result = db.get_answer(i <= 15 ? "single" : "max", content_utf, options_utf);
         logger->info("[答案提示]：{}", dump(result));
         auto answer_db = result["answer"].asString();
         int answer_index;
@@ -615,15 +688,16 @@ void adb::challenge(int max) {
             if (!std::regex_search(text, sm, std::regex("本次答对 (\\d+) 题")))
                 throw std::runtime_error("找不到[ 本次答对 (\\d+) 题 ]");
             score8 = atoi(sm[1].str().c_str());
+            five -= score8 / 5;
+            logger->debug("five: {}", five);
             logger->info("[挑战答题]：本次答对 {} 题", score8);
             logger->info("[结束本局]");
             tap(select_with_text("结束本局"));
 
-            if (exist_with_text("领取奖励已达今日上限")) {
-                logger->info("[领取奖励已达今日上限]");
+            if (five <= 0) {
                 logger->info("[返回]");
-                back();
-                back();
+                back(1, false);
+                back(1, false);
                 back();
                 return;
             }
@@ -656,6 +730,18 @@ void adb::score() {
         back();
     }
     throw std::runtime_error("点不动[学习积分]");
+}
+
+// 学习积分 -> 强国商城
+void adb::store() {
+    for (int i = 0; i < 3; i++) {
+        logger->info("[强国商城]");
+        tap(select_with_text("强国商城兑福利"), 5);
+        if (exist_with_text("我的点点通"))
+            return;
+        back();
+    }
+    throw std::runtime_error("点不动[强国商城]");
 }
 
 // 点击坐标

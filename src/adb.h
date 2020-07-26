@@ -20,14 +20,15 @@ public:
     void init();
 
     // 各种学习
-    void read();
-    void listen();
+    void read(bool is_ppp = true);
+    void listen(bool is_ppp = true);
     void daily(bool is_training = false);
-    void challenge(int max = 10);
+    void challenge(bool is_ppp = true);
 
     // 导航
     void back(int64_t delay = 2, bool is_pull = true);
     void score();
+    void store();
 
 private:
 
