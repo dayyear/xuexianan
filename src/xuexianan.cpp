@@ -31,7 +31,7 @@ int main() {
         try {
             adb adb;
             std::cout << std::endl;
-            logger->info("-------- [学习安安：v2.14.1] --------");
+            logger->info("-------- [学习安安：v2.15.0] --------");
             logger->info("[主菜单]");
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "1" << " - " << "连接安卓手机" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(8) << " " << "* 用USB线连接安卓手机，记得打开安卓系统的USB调试模式" << std::endl;

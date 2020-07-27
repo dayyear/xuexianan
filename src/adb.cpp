@@ -105,6 +105,7 @@ void adb::read(bool is_ppp) {
                 store();
                 logger->info("[点点通明细]");
                 tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+                pull();
                 auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='有效浏览' or @content-desc='有效浏览']/following-sibling::node[1]").c_str());
                 int ppp = 0;
                 for (auto &ppp_xpath : ppps_xpath) {
@@ -230,6 +231,7 @@ void adb::listen(bool is_ppp) {
                 store();
                 logger->info("[点点通明细]");
                 tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+                pull();
                 auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='有效视听' or @content-desc='有效视听']/following-sibling::node[1]").c_str());
                 int ppp = 0;
                 for (auto &ppp_xpath : ppps_xpath) {
@@ -333,6 +335,7 @@ void adb::daily(bool is_training) {
         back();
         logger->info("[我要答题]");
         tap(select_with_text("我要答题"), 10);
+        pull();
         logger->info("[每日答题]");
         tap(select_with_text("每日答题"), 10);
     } else {
@@ -583,6 +586,7 @@ void adb::challenge(bool is_ppp) {
             store();
             logger->info("[点点通明细]");
             tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+            pull();
             auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='挑战答题' or @content-desc='挑战答题']/following-sibling::node[1]").c_str());
             int ppp = 0;
             for (auto &ppp_xpath : ppps_xpath) {
@@ -618,6 +622,7 @@ void adb::challenge(bool is_ppp) {
     back();
     logger->info("[我要答题]");
     tap(select_with_text("我要答题"), 10);
+    pull();
     logger->info("[挑战答题]");
     tap(select_with_text("挑战答题"), 10);
 
@@ -737,6 +742,7 @@ void adb::store() {
     for (int i = 0; i < 3; i++) {
         logger->info("[强国商城]");
         tap(select_with_text("强国商城兑福利"), 5);
+        pull();
         if (exist_with_text("我的点点通"))
             return;
         back();
@@ -809,7 +815,7 @@ void adb::pull() {
     logger->debug(result);
 
     result = exec("adb pull /sdcard/ui.xml log/ui.xml");
-    if (result.find("1 file pulled") == std::string::npos)
+    if (result.find("[100%] /sdcard/ui.xml") == std::string::npos)
         throw std::runtime_error(result);
     logger->debug(result);
 
