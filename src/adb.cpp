@@ -656,7 +656,7 @@ void adb::challenge(bool is_ppp) {
         }
         options_utf = options_utf.substr(0, options_utf.size() - 2);
 
-        auto result = db.get_answer(i <= 15 ? "single" : "max", content_utf, options_utf);
+        auto result = db.get_answer(i <= (five * 5) ? "single" : "max", content_utf, options_utf);
         logger->info("[´ð°¸ÌáÊ¾]£º{}", dump(result));
         auto answer_db = result["answer"].asString();
         int answer_index;
