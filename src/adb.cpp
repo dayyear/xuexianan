@@ -4,7 +4,8 @@
 #include <regex>
 #include <thread>
 #include <list>
-#include <json/value.h>
+#include <json/writer.h>
+#include <json/reader.h>
 #include <pugixml.hpp>
 
 #include "database.h"
@@ -19,6 +20,33 @@ char i2c(int i) {
 
 int c2i(char c) {
     return c - 'A';
+}
+
+std::list<std::string> get_titles(const std::string &my_name) {
+    Json::Value titles_json;
+    std::ifstream ifs("log/" + my_name + ".json", std::ios::binary | std::ios::in);
+    if (ifs.is_open())
+        ifs >> titles_json;
+    ifs.close();
+
+    std::list<std::string> titles;
+    for (const auto &title : titles_json)
+        titles.push_back(utf2gbk(title.asString()));
+    return titles;
+}
+
+void save_titles(const std::string &my_name, const std::list<std::string> &titles) {
+    Json::Value titles_json;
+    for (const auto &title : titles)
+        titles_json.append(gbk2utf(title));
+
+    Json::Value temp;
+    while (titles_json.size() > 1024)
+        titles_json.removeIndex(0, &temp);
+
+    std::ofstream ofs("log/" + my_name + ".json", std::ios::binary | std::ios::out);
+    ofs << titles_json;
+    ofs.close();
 }
 
 adb::adb() {
@@ -72,7 +100,6 @@ void adb::read(bool is_ppp) {
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
-    std::list<std::string> titles;
 
     logger->info("[学习]");
     tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
@@ -144,6 +171,8 @@ void adb::read(bool is_ppp) {
         back();
         back();
 
+        std::list<std::string> titles = get_titles(my_name);
+        int title_index = 0;
         for (int c = 0; c < 6;) {
             pugi::xml_document ui1;
             ui1.append_copy(ui.child("hierarchy"));
@@ -167,7 +196,7 @@ void adb::read(bool is_ppp) {
                 }
                 auto node = xpath_node.node();
                 text = get_text(node);
-                logger->info("[学习文章]：{}. {}({}秒)", titles.size() + 1, text, delay);
+                logger->info("[学习文章]：{}. {}({}秒)", ++title_index, text, delay);
                 tap(node, 2, false);
                 for (int i = 0; i < delay / 20; i++) {
                     if (rand() % 2)
@@ -176,7 +205,8 @@ void adb::read(bool is_ppp) {
                         swipe_down(0, false);
                     std::this_thread::sleep_for(std::chrono::seconds(20 + std::rand() % 3));
                 }
-                titles.push_back(text);
+                titles.push_back("[学习文章]：" + text);
+                save_titles(my_name, titles);
                 c++;
                 back();
             }
@@ -198,7 +228,6 @@ void adb::listen(bool is_ppp) {
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
-    std::list<std::string> titles;
 
     logger->info("[电视台]");
     tap(select_with_text("电视台"));
@@ -270,6 +299,8 @@ void adb::listen(bool is_ppp) {
         back();
         back();
 
+        std::list<std::string> titles = get_titles(my_name);
+        int title_index = 0;
         for (int c = 0; c < 6;) {
             pugi::xml_document ui1;
             ui1.append_copy(ui.child("hierarchy"));
@@ -293,10 +324,11 @@ void adb::listen(bool is_ppp) {
                 }
                 auto node = xpath_node.node();
                 text = get_text(node);
-                logger->info("[视听学习]：{}. {}({}秒)", titles.size() + 1, text, delay);
+                logger->info("[视听学习]：{}. {}({}秒)", ++title_index, text, delay);
                 tap(node, 2, false);
                 std::this_thread::sleep_for(std::chrono::seconds(delay + (delay / 30) * (std::rand() % 4)));
-                titles.push_back(text);
+                titles.push_back("[视听学习]：" + text);
+                save_titles(my_name, titles);
                 c++;
                 back();
             }
@@ -724,6 +756,7 @@ void adb::back(int64_t delay, bool is_pull) {
 void adb::score() {
     logger->info("[我的]");
     tap(select_with_text("我的"));
+    my_name = get_text(select("//node[@resource-id='cn.xuexi.android:id/my_display_name']"));
 
     for (int i = 0; i < 3; i++) {
         logger->info("[学习积分]");

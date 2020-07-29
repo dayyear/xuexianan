@@ -1,8 +1,6 @@
 #ifndef ADB_H_
 #define ADB_H_
 
-//#include <list>
-
 class adb {
 private:
     pugi::xml_document ui;
@@ -10,6 +8,7 @@ private:
     int height = 0;
     int back_x = 0;
     int back_y = 0;
+    std::string my_name;
 
 public:
     adb();
