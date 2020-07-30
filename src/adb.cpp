@@ -100,6 +100,7 @@ void adb::read(bool is_ppp) {
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
+    int title_index = 0;
 
     logger->info("[学习]");
     tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
@@ -172,7 +173,6 @@ void adb::read(bool is_ppp) {
         back();
 
         std::list<std::string> titles = get_titles(my_name);
-        int title_index = 0;
         for (int c = 0; c < 6;) {
             pugi::xml_document ui1;
             ui1.append_copy(ui.child("hierarchy"));
@@ -185,7 +185,7 @@ void adb::read(bool is_ppp) {
                 int x, y1, y2;
                 getxy(x, y1, bounds, 1, 1, 1, 0);
                 getxy(x, y2, bounds, 1, 1, 0, 1);
-                return std::find(titles.begin(), titles.end(), this->get_text(node)) == titles.end() && y2 - y1 > 3;
+                return std::find(titles.begin(), titles.end(), "[学习文章]：" + this->get_text(node)) == titles.end() && y2 - y1 > 3;
             });
             logger->info("[学习文章]：发现 {} 篇文章", valid_xpath_nodes.size());
             bool is_left = false;
@@ -210,7 +210,7 @@ void adb::read(bool is_ppp) {
                 c++;
                 back();
             }
-            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && titles.size() % 24 == 0)) {
+            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && title_index % 24 == 0)) {
                 swipe_left();
                 logger->info("[刷新]");
                 tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
@@ -228,6 +228,7 @@ void adb::listen(bool is_ppp) {
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
+    int title_index = 0;
 
     logger->info("[电视台]");
     tap(select_with_text("电视台"));
@@ -300,7 +301,6 @@ void adb::listen(bool is_ppp) {
         back();
 
         std::list<std::string> titles = get_titles(my_name);
-        int title_index = 0;
         for (int c = 0; c < 6;) {
             pugi::xml_document ui1;
             ui1.append_copy(ui.child("hierarchy"));
@@ -313,7 +313,7 @@ void adb::listen(bool is_ppp) {
                 int x, y1, y2;
                 getxy(x, y1, bounds, 1, 1, 1, 0);
                 getxy(x, y2, bounds, 1, 1, 0, 1);
-                return std::find(titles.begin(), titles.end(), this->get_text(node)) == titles.end() && y2 - y1 > 3;
+                return std::find(titles.begin(), titles.end(), "[视听学习]：" + this->get_text(node)) == titles.end() && y2 - y1 > 3;
             });
             logger->info("[视听学习]：发现 {} 个视听", valid_xpath_nodes.size());
             bool is_left = false;
@@ -332,7 +332,7 @@ void adb::listen(bool is_ppp) {
                 c++;
                 back();
             }
-            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && titles.size() % 24 == 0)) {
+            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && title_index % 24 == 0)) {
                 swipe_right();
                 logger->info("[刷新]");
                 tap(select_with_text("电视台"));
