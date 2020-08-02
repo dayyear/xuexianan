@@ -28,7 +28,10 @@ public:
     void back(int64_t delay = 2, bool is_pull = true);
     void score();
     void store();
+    void repair();
 
+    // ²âÊÔ
+    void test();
 private:
 
     // ÈË¹¤²Ù×÷

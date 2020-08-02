@@ -59,8 +59,20 @@ int main() {
             } else if (arg == "T" || arg == "t") {
                 logger->info("[Ìâ¿âÑµÁ·]");
                 adb.init();
-                adb.daily(true);
-                break;
+                for (;;) {
+                    try {
+                        adb.daily(true);
+                    } catch (const std::exception &ex) {
+                        logger->error("{}", ex.what());
+                        adb.repair();
+                    }
+                }
+            } else if (arg == "test") {
+                logger->info("[²âÊÔ]");
+                for (;;) {
+                    adb.test();
+                    system("pause");
+                }
             } else if (arg == "Q" || arg == "q") {
                 logger->info("ÍË³ö");
                 break;

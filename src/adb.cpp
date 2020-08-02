@@ -176,16 +176,19 @@ void adb::read(bool is_ppp) {
         for (int c = 0; c < 6;) {
             pugi::xml_document ui1;
             ui1.append_copy(ui.child("hierarchy"));
-            auto xpath_nodes = ui1.select_nodes("//node[@resource-id='cn.xuexi.android:id/general_card_title_id']");
+            auto xpath_nodes = ui1.select_nodes("//node[@class='android.widget.ListView']//node[@class='android.widget.TextView']");
             // xpath_nodes 中选择不重复的为 valid_xpath_nodes
             std::list<pugi::xpath_node> valid_xpath_nodes;
             std::copy_if(xpath_nodes.begin(), xpath_nodes.end(), std::back_inserter(valid_xpath_nodes), [this, &titles](const pugi::xpath_node &xpath_node) {
                 auto node = xpath_node.node();
                 std::string bounds = node.attribute("bounds").value();
-                int x, y1, y2;
-                getxy(x, y1, bounds, 1, 1, 1, 0);
-                getxy(x, y2, bounds, 1, 1, 0, 1);
-                return std::find(titles.begin(), titles.end(), "[学习文章]：" + this->get_text(node)) == titles.end() && y2 - y1 > 3;
+                std::string resource_id = node.attribute("resource-id").value();
+                std::string text = this->get_text(node);
+                int x1, x2, y1, y2;
+                getxy(x1, y1, bounds, 1, 0, 1, 0);
+                getxy(x2, y2, bounds, 0, 1, 0, 1);
+                // 1. 不重复；2. 不在水下；3. 字数足够；4. 足够宽或general_card_title_id
+                return std::find(titles.begin(), titles.end(), "[学习文章]：" + text) == titles.end() && y2 - y1 > 3 && text.size() > 5 && (x2 - x1 > 0.8 * this->width || resource_id == "cn.xuexi.android:id/general_card_title_id");
             });
             logger->info("[学习文章]：发现 {} 篇文章", valid_xpath_nodes.size());
             bool is_left = false;
@@ -304,16 +307,19 @@ void adb::listen(bool is_ppp) {
         for (int c = 0; c < 6;) {
             pugi::xml_document ui1;
             ui1.append_copy(ui.child("hierarchy"));
-            auto xpath_nodes = ui1.select_nodes("//node[@resource-id='cn.xuexi.android:id/general_card_title_id']");
+            auto xpath_nodes = ui1.select_nodes("//node[@class='android.widget.ListView']//node[@class='android.widget.TextView']");
             // xpath_nodes 中选择不重复的为 valid_xpath_nodes
             std::list<pugi::xpath_node> valid_xpath_nodes;
             std::copy_if(xpath_nodes.begin(), xpath_nodes.end(), std::back_inserter(valid_xpath_nodes), [this, &titles](const pugi::xpath_node &xpath_node) {
                 auto node = xpath_node.node();
                 std::string bounds = node.attribute("bounds").value();
-                int x, y1, y2;
-                getxy(x, y1, bounds, 1, 1, 1, 0);
-                getxy(x, y2, bounds, 1, 1, 0, 1);
-                return std::find(titles.begin(), titles.end(), "[视听学习]：" + this->get_text(node)) == titles.end() && y2 - y1 > 3;
+                std::string resource_id = node.attribute("resource-id").value();
+                std::string text = this->get_text(node);
+                int x1, x2, y1, y2;
+                getxy(x1, y1, bounds, 1, 0, 1, 0);
+                getxy(x2, y2, bounds, 0, 1, 0, 1);
+                // 1. 不重复；2. 不在水下；3. 字数足够；4. 足够宽或general_card_title_id
+                return std::find(titles.begin(), titles.end(), "[视听学习]：" + text) == titles.end() && y2 - y1 > 3 && text.size() > 5 && (x2 - x1 > 0.8 * this->width || resource_id == "cn.xuexi.android:id/general_card_title_id");
             });
             logger->info("[视听学习]：发现 {} 个视听", valid_xpath_nodes.size());
             bool is_left = false;
@@ -324,9 +330,15 @@ void adb::listen(bool is_ppp) {
                 }
                 auto node = xpath_node.node();
                 text = get_text(node);
-                logger->info("[视听学习]：{}. {}({}秒)", ++title_index, text, delay);
-                tap(node, 2, false);
-                std::this_thread::sleep_for(std::chrono::seconds(delay + (delay / 30) * (std::rand() % 4)));
+                if (text.find("新闻联播") != std::string::npos) {
+                    logger->info("[视听学习]：{}. {}({}秒)", ++title_index, text, delay * 3);
+                    tap(node, 2, false);
+                    std::this_thread::sleep_for(std::chrono::seconds(delay * 3));
+                } else {
+                    logger->info("[视听学习]：{}. {}({}秒)", ++title_index, text, delay);
+                    tap(node, 2, false);
+                    std::this_thread::sleep_for(std::chrono::seconds(delay + (delay / 30) * (std::rand() % 4)));
+                }
                 titles.push_back("[视听学习]：" + text);
                 save_titles(my_name, titles);
                 c++;
@@ -448,14 +460,14 @@ void adb::daily(bool is_training) {
                         tap(node, 0, false);
                         int substr_size = 0, word_index = 0;
                         do {
+                            if (answer[substr_index + substr_size] & 0x80)
+                                substr_size++;
                             substr_size++;
                             word_index++;
-                            if (answer[substr_index] & 0x80)
-                                substr_size++;
                             std::string xpath = "(//node[@class='android.widget.EditText'])[" + std::to_string(answer_index + 1) + "]/following-sibling::node[" + std::to_string(word_index + 1) + "]";
                             node = ui.select_node(xpath.c_str()).node();
                         } while (!node.empty() && !get_text(node).size());
-                        logger->debug("substr_index = {}, substr_size = {}", substr_index, substr_size);
+                        logger->debug("substr_index = {}, substr_size = {}, word_index = {}", substr_index, substr_size, word_index);
                         input_text(answer.substr(substr_index, substr_size));
                         logger->info("[提交答案]：{}", answer.substr(substr_index, substr_size));
                         substr_index += substr_size;
@@ -781,6 +793,42 @@ void adb::store() {
         back();
     }
     throw std::runtime_error("点不动[强国商城]");
+}
+
+void adb::repair() {
+    for (;;) {
+        try {
+            back();
+        } catch (...) {
+        }
+        if (exist_with_text("退出"))
+            tap(select_with_text("退出"));
+        if (exist("//node[@resource-id='cn.xuexi.android:id/comm_head_title']"))
+            return;
+    }
+}
+
+void adb::test() {
+    pull();
+    int x, y;
+    getxy(x, y, select("//node").attribute("bounds").value());
+    width = 2 * x;
+    height = 2 * y;
+    logger->debug("分辨率：{}×{}", width, height);
+
+    auto testviews = ui.select_nodes("//node[@class='android.widget.ListView']//node[@class='android.widget.TextView']");
+    for (auto &testview : testviews) {
+        auto node = testview.node();
+        std::string bounds = node.attribute("bounds").value();
+        std::string resource_id = node.attribute("resource-id").value();
+        std::string text = get_text(testview.node());
+        int x1, x2;
+        getxy(x1, y, bounds, 1, 0, 1, 1);
+        getxy(x2, y, bounds, 0, 1, 1, 1);
+        //if ((x1 < 0.1 * width && x2 > 0.9 * width && !std::regex_match(text, std::regex("\\d{2}:\\d{2}"))) || resource_id == "cn.xuexi.android:id/general_card_title_id")
+        if ((x1 < 0.1 * width && x2 > 0.9 * width && text.size() > 5) || resource_id == "cn.xuexi.android:id/general_card_title_id")
+            logger->info(text);
+    }
 }
 
 // 点击坐标

@@ -20,7 +20,7 @@ database::~database(void) {
     sqlite3_close(db);
 } //database::~database
 
-Json::Value database::groupby_type(){
+Json::Value database::groupby_type() {
     return get_items("select type, count(*) c from quiz group by type order by type");
 }
 
