@@ -88,6 +88,8 @@ void adb::init() {
     }
     getxy(back_x, back_y, node.attribute("bounds").value(), 33, 10);
     logger->debug("返回按钮：({},{})", back_x, back_y);
+    getxy(exit_x, exit_y, select("//node").attribute("bounds").value(), 17, 10, 7, 9);
+    logger->debug("退出按钮：({},{})", exit_x, exit_y);
 
     // [{"c":"1575","type":"blank"},{"c":"1065","type":"challenge"},{"c":"1100","type":"multiple"},{"c":"921","type":"single"}]
     auto groupby_type = db.groupby_type();
@@ -798,11 +800,13 @@ void adb::store() {
 void adb::repair() {
     for (;;) {
         try {
+            back(2, false);
+            tap(exit_x, exit_y, 2, false);
             back();
         } catch (...) {
         }
-        if (exist_with_text("退出"))
-            tap(select_with_text("退出"));
+        //if (exist_with_text("退出"))
+        //    tap(select_with_text("退出"));
         if (exist("//node[@resource-id='cn.xuexi.android:id/comm_head_title']"))
             return;
     }

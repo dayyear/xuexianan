@@ -8,6 +8,8 @@ private:
     int height = 0;
     int back_x = 0;
     int back_y = 0;
+    int exit_x = 0;
+    int exit_y = 0;
     std::string my_name;
 
 public:
