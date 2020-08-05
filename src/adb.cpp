@@ -458,7 +458,7 @@ void adb::daily(bool is_training) {
                     int x, y1, y2;
                     getxy(x, y1, node.attribute("bounds").value(), 1, 1, 1, 0);
                     getxy(x, y2, node.attribute("bounds").value(), 1, 1, 0, 1);
-                    if (y2 - y1 > 3) {
+                    if (y2 - y1 > 3 && y1 < 0.9 * height) {
                         tap(node, 0, false);
                         int substr_size = 0, word_index = 0;
                         do {
@@ -907,6 +907,10 @@ void adb::pull() {
     auto result1 = ui.load_file("log/ui.xml");
     if (!result1)
         throw std::runtime_error(result1.description());
+
+    static int file_index = 0;
+    ui.save_file(("log/ui-" + std::to_string(file_index) + ".xml").c_str());
+    file_index = (file_index + 1) % 10;
 }
 
 // 键盘输入，支持中文
