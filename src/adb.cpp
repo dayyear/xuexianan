@@ -98,7 +98,7 @@ void adb::init() {
 
 // 学习文章
 void adb::read(bool is_ppp) {
-    int score1, score3;
+    int score1, score3, score10, score11, score12;
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
@@ -130,7 +130,31 @@ void adb::read(bool is_ppp) {
         score3 = atoi(sm[1].str().c_str());
         logger->info("[文章学习时长]：已获{}分/每日上限6分", score3);
 
-        if (score1 >= 6 && score3 >= 6) {
+        // 收藏
+        node = select("//node[@class='android.widget.ListView']/node[@index='10']/node[@index='2']");
+        text = get_text(node);
+        if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
+            throw std::runtime_error("找不到[ 收藏 ]");
+        score10 = atoi(sm[1].str().c_str());
+        logger->info("[收藏]：已获{}分/每日上限1分", score10);
+
+        // 分享
+        node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='2']");
+        text = get_text(node);
+        if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
+            throw std::runtime_error("找不到[ 分享 ]");
+        score11 = atoi(sm[1].str().c_str());
+        logger->info("[分享]：已获{}分/每日上限1分", score11);
+
+        // 发表观点
+        node = select("//node[@class='android.widget.ListView']/node[@index='12']/node[@index='2']");
+        text = get_text(node);
+        if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限2分")))
+            throw std::runtime_error("找不到[ 发表观点 ]");
+        score12 = atoi(sm[1].str().c_str());
+        logger->info("[发表观点]：已获{}分/每日上限2分", score12);
+
+        if (score1 >= 6 && score3 >= 6 && score10 >= 1 && score11 >= 1 && score12 >= 2) {
             if (is_ppp) {
                 store();
                 logger->info("[点点通明细]");
@@ -203,13 +227,58 @@ void adb::read(bool is_ppp) {
                 text = get_text(node);
                 logger->info("[学习文章]：{}. {}({}秒)", ++title_index, text, delay);
                 tap(node, 2, false);
-                for (int i = 0; i < delay / 20; i++) {
+                for (int i = 0; i < delay / 15; i++) {
                     if (rand() % 2)
                         swipe_up(0, false);
                     else
                         swipe_down(0, false);
-                    std::this_thread::sleep_for(std::chrono::seconds(20 + std::rand() % 3));
+                    std::this_thread::sleep_for(std::chrono::seconds(15 + std::rand() % 3));
                 }
+
+                // 收藏
+                if (score10 < 1)
+                    try {
+                        pull();
+                        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[3]");
+                        tap(node, 2, false);
+                        tap(node, 2, false);
+                    } catch (...) {
+                    }
+
+                // 分享
+                if (score11 < 1)
+                    try {
+                        pull();
+                        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[4]");
+                        tap(node);
+                        tap(select_with_text("分享到短信"));
+                    } catch (...) {
+                    }
+
+                // 发表观点
+                if (score12 < 2)
+                    try {
+                        pull();
+                        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]/node[1]/node[2]");
+                        int comment_count = atoi(get_text(node).c_str());
+                        if (comment_count > 0) {
+                            tap(node);
+                            if (!exist_with_text("删除")) {
+                                node = select("//node[@class='android.support.v7.widget.RecyclerView']/node[3]/node[2]/node[1]");
+                                auto comment = get_text(node);
+                                tap(select_with_text("欢迎发表你的观点"));
+                                input_text(comment);
+                                pull();
+                                int x, y;
+                                getxy(x, y, select_with_text("发布").attribute("bounds").value());
+                                // 有时候这个，有时候那个，哎呀，全点了吧
+                                tap(x, y - 0 * height / 40, 2, false);
+                                tap(x, y - 1 * height / 40, 2, false);
+                            }
+                        }
+                    } catch (...) {
+                    }
+
                 titles.push_back("[学习文章]：" + text);
                 save_titles(my_name, titles);
                 c++;
@@ -808,8 +877,6 @@ void adb::repair() {
             back();
         } catch (...) {
         }
-        //if (exist_with_text("退出"))
-        //    tap(select_with_text("退出"));
         if (exist("//node[@resource-id='cn.xuexi.android:id/comm_head_title']"))
             return;
     }
@@ -823,19 +890,51 @@ void adb::test() {
     height = 2 * y;
     logger->debug("分辨率：{}×{}", width, height);
 
-    auto testviews = ui.select_nodes("//node[@class='android.widget.ListView']//node[@class='android.widget.TextView']");
-    for (auto &testview : testviews) {
-        auto node = testview.node();
-        std::string bounds = node.attribute("bounds").value();
-        std::string resource_id = node.attribute("resource-id").value();
-        std::string text = get_text(testview.node());
-        int x1, x2;
-        getxy(x1, y, bounds, 1, 0, 1, 1);
-        getxy(x2, y, bounds, 0, 1, 1, 1);
-        //if ((x1 < 0.1 * width && x2 > 0.9 * width && !std::regex_match(text, std::regex("\\d{2}:\\d{2}"))) || resource_id == "cn.xuexi.android:id/general_card_title_id")
-        if ((x1 < 0.1 * width && x2 > 0.9 * width && text.size() > 5) || resource_id == "cn.xuexi.android:id/general_card_title_id")
-            logger->info(text);
+    try {
+        pull();
+        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]/node[1]/node[2]");
+        int comment_count = atoi(get_text(node).c_str());
+        if (comment_count > 0) {
+            tap(node);
+            node = select("//node[@class='android.support.v7.widget.RecyclerView']/node[3]/node[2]/node[1]");
+            auto comment = get_text(node);
+            tap(select_with_text("欢迎发表你的观点"));
+            input_text(comment);
+            pull();
+            int x, y;
+            getxy(x, y, select_with_text("发布").attribute("bounds").value());
+            tap(x, y - 0 * height / 40, 2, false);
+        }
+    } catch (...) {
     }
+    try {
+        pull();
+        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[3]");
+        tap(node, 2, false);
+        tap(node, 2, false);
+    } catch (...) {
+    }
+    try {
+        pull();
+        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[4]");
+        tap(node);
+        tap(select_with_text("分享到短信"));
+    } catch (...) {
+    }
+
+    /*x = width / 2;
+     y = 47 * height / 48;
+     tap(x, y, 2, false);
+     exec("adb shell input keyevent 01");
+     input_text("不玩初心牢记使命");
+     exec("adb shell input keyevent 111");
+
+     x = 31 * width / 36;
+     tap(x, y, 2, false);
+
+     x = 17 * width / 18;
+     tap(x, y, 2, false);
+     exec("adb shell input keyevent 111");*/
 }
 
 // 点击坐标
@@ -900,7 +999,8 @@ void adb::pull() {
     auto result = exec("adb shell uiautomator dump /sdcard/ui.xml");
     if (result.size() && result.find("UI hierchary dumped to") == std::string::npos)
         throw std::runtime_error(result);
-    logger->debug(result);
+    if (result.size())
+        logger->debug(result);
 
     result = exec("adb pull /sdcard/ui.xml log/ui.xml");
     if (result.find("[100%] /sdcard/ui.xml") == std::string::npos)

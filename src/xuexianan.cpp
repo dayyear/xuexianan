@@ -33,8 +33,8 @@ int main() {
             std::cout << std::endl;
             logger->info("-------- [学习安安：v2.15.0] --------");
             logger->info("[主菜单]");
-            std::cout << setiosflags(std::ios::right) << std::setw(3) << "1" << " - " << "积分37" << std::endl;
-            std::cout << setiosflags(std::ios::right) << std::setw(3) << "2" << " - " << "积分37 + 点点通33" << std::endl;
+            std::cout << setiosflags(std::ios::right) << std::setw(3) << "1" << " - " << "积分41" << std::endl;
+            std::cout << setiosflags(std::ios::right) << std::setw(3) << "2" << " - " << "积分41 + 点点通33" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "T" << " - " << "题库训练" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "Q" << " - " << "退出" << std::endl;
             std::string arg = user_input("请选择(1/2/T/Q): ");
@@ -43,10 +43,10 @@ int main() {
                 adb.init();
                 for (;;) {
                     try {
-                        adb.read(false);
-                        adb.listen(false);
                         adb.daily(false);
                         adb.challenge(false);
+                        adb.read(false);
+                        adb.listen(false);
                         break;
                     } catch (const std::exception &ex) {
                         logger->error("{}", ex.what());
@@ -60,10 +60,10 @@ int main() {
                 adb.init();
                 for (;;) {
                     try {
-                        adb.read(true);
-                        adb.listen(true);
                         adb.daily(false);
                         adb.challenge(true);
+                        adb.read(true);
+                        adb.listen(true);
                         break;
                     } catch (const std::exception &ex) {
                         logger->error("{}", ex.what());
