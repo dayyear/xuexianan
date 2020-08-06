@@ -167,7 +167,7 @@ void adb::read(bool is_ppp) {
         // 计算平均每篇文章所需时长
         int delay = 20 * (6 - score3);
         if (!delay)
-            delay = 20;
+            delay = 15;
 
         // 首页
         logger->info("[返回]");
@@ -298,7 +298,7 @@ void adb::listen(bool is_ppp) {
         // 计算平均每个视听所需时长
         int delay = 30 * (6 - score4);
         if (!delay)
-            delay = 30;
+            delay = 15;
 
         // 首页
         logger->info("[返回]");
@@ -336,6 +336,9 @@ void adb::listen(bool is_ppp) {
                     logger->info("[视听学习]：{}. {}({}秒)", ++title_index, text, delay * 3);
                     tap(node, 2, false);
                     std::this_thread::sleep_for(std::chrono::seconds(delay * 3));
+                    delay /= 2;
+                    if (delay < 15)
+                        delay = 15;
                 } else {
                     logger->info("[视听学习]：{}. {}({}秒)", ++title_index, text, delay);
                     tap(node, 2, false);
