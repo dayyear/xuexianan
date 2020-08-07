@@ -240,6 +240,7 @@ void adb::read(bool is_ppp) {
                     try {
                         pull();
                         auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[3]");
+                        logger->info("[收藏]");
                         tap(node, 2, false);
                         tap(node, 2, false);
                     } catch (...) {
@@ -251,6 +252,7 @@ void adb::read(bool is_ppp) {
                         pull();
                         auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[4]");
                         tap(node);
+                        logger->info("[分享]");
                         tap(select_with_text("分享到短信"));
                     } catch (...) {
                     }
@@ -271,6 +273,7 @@ void adb::read(bool is_ppp) {
                                 pull();
                                 int x, y;
                                 getxy(x, y, select_with_text("发布").attribute("bounds").value());
+                                logger->info("[发表观点]：{}", comment);
                                 // 有时候这个，有时候那个，哎呀，全点了吧
                                 tap(x, y - 0 * height / 40, 2, false);
                                 tap(x, y - 1 * height / 40, 2, false);
@@ -282,6 +285,7 @@ void adb::read(bool is_ppp) {
                 titles.push_back("[学习文章]：" + text);
                 save_titles(my_name, titles);
                 c++;
+                back(1, false);
                 back();
             }
             if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && title_index % 24 == 0)) {
