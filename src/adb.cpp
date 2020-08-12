@@ -242,7 +242,9 @@ void adb::read(bool is_ppp) {
                         auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[3]");
                         logger->info("[收藏]");
                         tap(node, 2, false);
-                        tap(node, 2, false);
+                        tap(node, 2);
+                        if (exist_with_text("我知道了"))
+                            tap(select_with_text("我知道了"), 2, false);
                     } catch (...) {
                     }
 
@@ -458,6 +460,8 @@ void adb::daily(bool is_training) {
         logger->info("[我要答题]");
         tap(select_with_text("我要答题"), 10);
         pull();
+        if (exist_with_text("知道了"))
+            tap(select_with_text("知道了"));
         logger->info("[每日答题]");
         tap(select_with_text("每日答题"), 10);
     } else {
@@ -745,6 +749,8 @@ void adb::challenge(bool is_ppp) {
     logger->info("[我要答题]");
     tap(select_with_text("我要答题"), 10);
     pull();
+    if (exist_with_text("知道了"))
+        tap(select_with_text("知道了"));
     logger->info("[挑战答题]");
     tap(select_with_text("挑战答题"), 10);
 
