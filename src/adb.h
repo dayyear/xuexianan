@@ -25,6 +25,7 @@ public:
     void listen(bool is_ppp = true);
     void daily(bool is_training = false);
     void challenge(bool is_ppp = true);
+    void local();
 
     // µ¼º½
     void back(int64_t delay = 2, bool is_pull = true);

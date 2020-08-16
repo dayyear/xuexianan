@@ -96,9 +96,9 @@ void adb::init() {
     logger->info("[题库统计]：单选题 {}；多选题 {}；填空题 {}", groupby_type[3]["c"].asString(), groupby_type[2]["c"].asString(), groupby_type[0]["c"].asString());
 }
 
-// 学习文章
+// 我要选读文章
 void adb::read(bool is_ppp) {
-    int score1, score3, score10, score11, score12;
+    int score1, score11, score12;
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
@@ -114,32 +114,16 @@ void adb::read(bool is_ppp) {
         // 积分界面
         score();
 
-        // 阅读文章
+        // 我要选读文章
         node = select("//node[@class='android.widget.ListView']/node[@index='1']/node[@index='2']");
         text = get_text(node);
-        if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限6分")))
-            throw std::runtime_error("找不到[ 阅读文章 ]");
+        if (!std::regex_search(text, sm, std::regex("已获(\\d+)分/每日上限12分")))
+            throw std::runtime_error("找不到[ 我要选读文章 ]");
         score1 = atoi(sm[1].str().c_str());
-        logger->info("[阅读文章]：已获{}分/每日上限6分", score1);
-
-        // 文章学习时长
-        node = select("//node[@class='android.widget.ListView']/node[@index='3']/node[@index='2']");
-        text = get_text(node);
-        if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限6分")))
-            throw std::runtime_error("找不到[ 文章学习时长 ]");
-        score3 = atoi(sm[1].str().c_str());
-        logger->info("[文章学习时长]：已获{}分/每日上限6分", score3);
-
-        // 收藏
-        node = select("//node[@class='android.widget.ListView']/node[@index='10']/node[@index='2']");
-        text = get_text(node);
-        if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
-            throw std::runtime_error("找不到[ 收藏 ]");
-        score10 = atoi(sm[1].str().c_str());
-        logger->info("[收藏]：已获{}分/每日上限1分", score10);
+        logger->info("[我要选读文章]：已获{}分/每日上限12分", score1);
 
         // 分享
-        node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='2']");
+        node = select("//node[@class='android.widget.ListView']/node[@index='9']/node[@index='2']");
         text = get_text(node);
         if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
             throw std::runtime_error("找不到[ 分享 ]");
@@ -147,14 +131,14 @@ void adb::read(bool is_ppp) {
         logger->info("[分享]：已获{}分/每日上限1分", score11);
 
         // 发表观点
-        node = select("//node[@class='android.widget.ListView']/node[@index='12']/node[@index='2']");
+        node = select("//node[@class='android.widget.ListView']/node[@index='10']/node[@index='2']");
         text = get_text(node);
-        if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限2分")))
+        if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
             throw std::runtime_error("找不到[ 发表观点 ]");
         score12 = atoi(sm[1].str().c_str());
-        logger->info("[发表观点]：已获{}分/每日上限2分", score12);
+        logger->info("[发表观点]：已获{}分/每日上限1分", score12);
 
-        if (score1 >= 6 && score3 >= 6 && score10 >= 1 && score11 >= 1 && score12 >= 2) {
+        if (score1 >= 12 && score11 >= 1 && score12 >= 1) {
             if (is_ppp) {
                 store();
                 logger->info("[点点通明细]");
@@ -189,8 +173,8 @@ void adb::read(bool is_ppp) {
         }
 
         // 计算平均每篇文章所需时长
-        int delay = 20 * (6 - score3);
-        if (!delay)
+        int delay = 5 * (12 - score1);
+        if (delay < 15)
             delay = 15;
 
         // 首页
@@ -214,9 +198,9 @@ void adb::read(bool is_ppp) {
                 getxy(x1, y1, bounds, 1, 0, 1, 0);
                 getxy(x2, y2, bounds, 0, 1, 0, 1);
                 // 1. 不重复；2. 不在水下；3. 字数足够；4. 足够宽或general_card_title_id
-                return std::find(titles.begin(), titles.end(), "[学习文章]：" + text) == titles.end() && y2 - y1 > 3 && text.size() > 5 && (x2 - x1 > 0.8 * this->width || resource_id == "cn.xuexi.android:id/general_card_title_id");
+                return std::find(titles.begin(), titles.end(), "[我要选读文章]：" + text) == titles.end() && y2 - y1 > 3 && text.size() > 5 && (x2 - x1 > 0.8 * this->width || resource_id == "cn.xuexi.android:id/general_card_title_id");
             });
-            logger->info("[学习文章]：发现 {} 篇文章", valid_xpath_nodes.size());
+            logger->info("[我要选读文章]：发现 {} 篇文章", valid_xpath_nodes.size());
             bool is_left = false;
             for (auto &xpath_node : valid_xpath_nodes) {
                 if (c == 6) {
@@ -225,7 +209,7 @@ void adb::read(bool is_ppp) {
                 }
                 auto node = xpath_node.node();
                 text = get_text(node);
-                logger->info("[学习文章]：{}. {}({}秒)", ++title_index, text, delay);
+                logger->info("[我要选读文章]：{}. {}({}秒)", ++title_index, text, delay);
                 tap(node, 2, false);
                 for (int i = 0; i < delay / 15; i++) {
                     if (rand() % 2)
@@ -234,19 +218,6 @@ void adb::read(bool is_ppp) {
                         swipe_down(0, false);
                     std::this_thread::sleep_for(std::chrono::seconds(15 + std::rand() % 3));
                 }
-
-                // 收藏
-                if (score10 < 1)
-                    try {
-                        pull();
-                        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[3]");
-                        logger->info("[收藏]");
-                        tap(node, 2, false);
-                        tap(node, 2);
-                        if (exist_with_text("我知道了"))
-                            tap(select_with_text("我知道了"), 2, false);
-                    } catch (...) {
-                    }
 
                 // 分享
                 if (score11 < 1)
@@ -260,7 +231,7 @@ void adb::read(bool is_ppp) {
                     }
 
                 // 发表观点
-                if (score12 < 2)
+                if (score12 < 1)
                     try {
                         pull();
                         auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]/node[1]/node[2]");
@@ -284,7 +255,7 @@ void adb::read(bool is_ppp) {
                     } catch (...) {
                     }
 
-                titles.push_back("[学习文章]：" + text);
+                titles.push_back("[我要选读文章]：" + text);
                 save_titles(my_name, titles);
                 c++;
                 back(1, false);
@@ -329,7 +300,7 @@ void adb::listen(bool is_ppp) {
         logger->info("[视听学习]：已获{}分/每日上限6分", score2);
 
         // 视听学习时长
-        node = select("//node[@class='android.widget.ListView']/node[@index='4']/node[@index='2']");
+        node = select("//node[@class='android.widget.ListView']/node[@index='3']/node[@index='2']");
         text = get_text(node);
         if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限6分")))
             throw std::runtime_error("找不到[ 视听学习时长 ]");
@@ -371,8 +342,8 @@ void adb::listen(bool is_ppp) {
         }
 
         // 计算平均每个视听所需时长
-        int delay = 30 * (6 - score4);
-        if (!delay)
+        int delay = 10 * (6 - score4);
+        if (delay < 15)
             delay = 15;
 
         // 首页
@@ -408,9 +379,9 @@ void adb::listen(bool is_ppp) {
                 auto node = xpath_node.node();
                 text = get_text(node);
                 if (text.find("新闻联播") != std::string::npos) {
-                    logger->info("[视听学习]：{}. {}({}秒)", ++title_index, text, delay * 3);
+                    logger->info("[视听学习]：{}. {}({}秒)", ++title_index, text, delay * 4);
                     tap(node, 2, false);
-                    std::this_thread::sleep_for(std::chrono::seconds(delay * 3));
+                    std::this_thread::sleep_for(std::chrono::seconds(delay * 4));
                     delay /= 2;
                     if (delay < 15)
                         delay = 15;
@@ -439,7 +410,7 @@ void adb::listen(bool is_ppp) {
 
 // 每日答题
 void adb::daily(bool is_training) {
-    int score5;
+    int score4;
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
@@ -448,12 +419,12 @@ void adb::daily(bool is_training) {
     score();
 
     // 每日答题
-    node = select("//node[@class='android.widget.ListView']/node[@index='5']/node[@index='2']");
+    node = select("//node[@class='android.widget.ListView']/node[@index='4']/node[@index='2']");
     text = get_text(node);
     if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限6分")))
         throw std::runtime_error("找不到[ 每日答题 ]");
-    score5 = atoi(sm[1].str().c_str());
-    logger->info("[每日答题]：已获{}分/每日上限6分", score5);
+    score4 = atoi(sm[1].str().c_str());
+    logger->info("[每日答题]：已获{}分/每日上限6分", score4);
 
     if (is_training) {
         back();
@@ -465,14 +436,14 @@ void adb::daily(bool is_training) {
         logger->info("[每日答题]");
         tap(select_with_text("每日答题"), 10);
     } else {
-        if (score5 >= 6) {
+        if (score4 >= 6) {
             logger->info("[返回]");
             back();
             back();
             return;
         }
         for (;;) {
-            node = select("//node[@class='android.widget.ListView']/node[@index='5']/node[@index='3']");
+            node = select("//node[@class='android.widget.ListView']/node[@index='4']/node[@index='3']");
             std::string bounds = node.attribute("bounds").value();
             int x, y1, y2;
             getxy(x, y1, bounds, 1, 1, 1, 0);
@@ -584,10 +555,8 @@ void adb::daily(bool is_training) {
                 option_utf += xpath_node.node().attribute("text").value();
                 option_utf += xpath_node.node().attribute("content-desc").value();
                 logger->info(utf2gbk(option_utf));
-                //options_utf += option_utf + "'||CHAR(13)||CHAR(10)||'";
                 options_utf += option_utf + "\r\n";
             }
-            //options_utf = options_utf.substr(0, options_utf.size() - 24);
             options_utf = options_utf.substr(0, options_utf.size() - 2);
 
             std::list<int> answer_indexs;
@@ -672,7 +641,7 @@ void adb::daily(bool is_training) {
             tap(select("//node[@text='下一题' or @text='完成' or @content-desc='下一题' or @content-desc='完成']"));
 
         // 再来一组或返回
-        if (i % 10 > 0)
+        if (i % 5 > 0)
             continue;
 
         logger->info("[本次答对题目数]：{}", get_text(select("//node[@text='本次答对题目数' or @content-desc='本次答对题目数']/following-sibling::node[1]")));
@@ -690,7 +659,7 @@ void adb::daily(bool is_training) {
 }
 
 void adb::challenge(bool is_ppp) {
-    int score8;
+    int score7;
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
@@ -699,15 +668,15 @@ void adb::challenge(bool is_ppp) {
     score();
 
     // 挑战答题
-    node = select("//node[@class='android.widget.ListView']/node[@index='8']/node[@index='2']");
+    node = select("//node[@class='android.widget.ListView']/node[@index='7']/node[@index='2']");
     text = get_text(node);
     if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限6分")))
         throw std::runtime_error("找不到[ 挑战答题 ]");
-    score8 = atoi(sm[1].str().c_str());
-    logger->info("[挑战答题]：已获{}分/每日上限6分", score8);
+    score7 = atoi(sm[1].str().c_str());
+    logger->info("[挑战答题]：已获{}分/每日上限6分", score7);
 
     int five;
-    if (score8 >= 6) {
+    if (score7 >= 6) {
         if (is_ppp) {
             store();
             logger->info("[点点通明细]");
@@ -741,7 +710,7 @@ void adb::challenge(bool is_ppp) {
             return;
         }
     } else {
-        five = (6 - score8) / 3 + (is_ppp ? 1 : 0);
+        five = is_ppp ? 3 : 1;
     }
     logger->debug("five: {}", five);
 
@@ -820,10 +789,10 @@ void adb::challenge(bool is_ppp) {
             text = get_text(select("//node[@text='挑战结束' or @content-desc='挑战结束']/following-sibling::node[1]"));
             if (!std::regex_search(text, sm, std::regex("本次答对 (\\d+) 题")))
                 throw std::runtime_error("找不到[ 本次答对 (\\d+) 题 ]");
-            score8 = atoi(sm[1].str().c_str());
-            five -= score8 / 5;
+            score7 = atoi(sm[1].str().c_str());
+            five -= score7 / 5;
             logger->debug("five: {}", five);
-            logger->info("[挑战答题]：本次答对 {} 题", score8);
+            logger->info("[挑战答题]：本次答对 {} 题", score7);
             logger->info("[结束本局]");
             tap(select_with_text("结束本局"));
 
@@ -843,6 +812,47 @@ void adb::challenge(bool is_ppp) {
     }
 }
 
+void adb::local() {
+    int score11;
+    std::smatch sm;
+    pugi::xml_node node;
+    std::string text;
+
+    // 积分界面
+    score();
+
+    // 每日答题
+    node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='2']");
+    text = get_text(node);
+    if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
+        throw std::runtime_error("找不到[ 本地频道 ]");
+    score11 = atoi(sm[1].str().c_str());
+    logger->info("[本地频道]：已获{}分/每日上限1分", score11);
+
+    if (score11 >= 1) {
+        logger->info("[返回]");
+        back();
+        back();
+        return;
+    }
+    for (;;) {
+        node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='3']");
+        std::string bounds = node.attribute("bounds").value();
+        int x, y1, y2;
+        getxy(x, y1, bounds, 1, 1, 1, 0);
+        getxy(x, y2, bounds, 1, 1, 0, 1);
+        if (y2 - y1 > 3) {
+            logger->info("[去看看]");
+            tap(node);
+            break;
+        }
+        swipe_up();
+    }
+
+    tap(select("//node[@class='android.support.v7.widget.RecyclerView']/node[1]"));
+    back();
+}
+
 // 回退
 void adb::back(int64_t delay, bool is_pull) {
     tap(back_x, back_y, delay, is_pull);
@@ -859,6 +869,8 @@ void adb::score() {
         tap(select_with_text("学习积分"), 10);
         if (exist_with_text("积分明细")) {
             pull();
+            if (exist_with_text("好的，知道了"))
+                tap(select_with_text("好的，知道了"));
             return;
         }
         back();
