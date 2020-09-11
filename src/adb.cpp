@@ -718,10 +718,14 @@ void adb::challenge(bool is_ppp) {
     logger->info("[我要答题]");
     tap(select_with_text("我要答题"), 10);
     pull();
+    if (exist_with_text("下一步"))
+        tap(select_with_text("下一步"));
+    if (exist_with_text("下一步"))
+        tap(select_with_text("下一步"));
     if (exist_with_text("知道了"))
         tap(select_with_text("知道了"));
     logger->info("[挑战答题]");
-    tap(select_with_text("挑战答题"), 10);
+    tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[3]"), 10);
 
     for (int i = 1;; i++) {
         std::cout << std::endl;
