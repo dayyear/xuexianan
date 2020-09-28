@@ -123,7 +123,7 @@ void adb::read(bool is_ppp) {
         logger->info("[我要选读文章]：已获{}分/每日上限12分", score1);
 
         // 分享
-        node = select("//node[@class='android.widget.ListView']/node[@index='9']/node[@index='2']");
+        node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='2']");
         text = get_text(node);
         if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
             throw std::runtime_error("找不到[ 分享 ]");
@@ -131,7 +131,7 @@ void adb::read(bool is_ppp) {
         logger->info("[分享]：已获{}分/每日上限1分", score11);
 
         // 发表观点
-        node = select("//node[@class='android.widget.ListView']/node[@index='10']/node[@index='2']");
+        node = select("//node[@class='android.widget.ListView']/node[@index='12']/node[@index='2']");
         text = get_text(node);
         if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
             throw std::runtime_error("找不到[ 发表观点 ]");
@@ -817,7 +817,7 @@ void adb::challenge(bool is_ppp) {
 }
 
 void adb::local() {
-    int score11;
+    int score13;
     std::smatch sm;
     pugi::xml_node node;
     std::string text;
@@ -826,21 +826,21 @@ void adb::local() {
     score();
 
     // 每日答题
-    node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='2']");
+    node = select("//node[@class='android.widget.ListView']/node[@index='13']/node[@index='2']");
     text = get_text(node);
     if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
         throw std::runtime_error("找不到[ 本地频道 ]");
-    score11 = atoi(sm[1].str().c_str());
-    logger->info("[本地频道]：已获{}分/每日上限1分", score11);
+    score13 = atoi(sm[1].str().c_str());
+    logger->info("[本地频道]：已获{}分/每日上限1分", score13);
 
-    if (score11 >= 1) {
+    if (score13 >= 1) {
         logger->info("[返回]");
         back();
         back();
         return;
     }
     for (;;) {
-        node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='3']");
+        node = select("//node[@class='android.widget.ListView']/node[@index='13']/node[@index='3']");
         std::string bounds = node.attribute("bounds").value();
         int x, y1, y2;
         getxy(x, y1, bounds, 1, 1, 1, 0);
