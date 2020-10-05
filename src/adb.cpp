@@ -421,10 +421,10 @@ void adb::daily(bool is_training) {
     // 每日答题
     node = select("//node[@class='android.widget.ListView']/node[@index='4']/node[@index='2']");
     text = get_text(node);
-    if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限6分")))
+    if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限5分")))
         throw std::runtime_error("找不到[ 每日答题 ]");
     score4 = atoi(sm[1].str().c_str());
-    logger->info("[每日答题]：已获{}分/每日上限6分", score4);
+    logger->info("[每日答题]：已获{}分/每日上限5分", score4);
 
     if (is_training) {
         back();
