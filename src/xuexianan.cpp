@@ -33,8 +33,8 @@ int main() {
             std::cout << std::endl;
             logger->info("-------- [学习安安：v2.15.0] --------");
             logger->info("[主菜单]");
-            std::cout << setiosflags(std::ios::right) << std::setw(3) << "1" << " - " << "积分40" << std::endl;
-            std::cout << setiosflags(std::ios::right) << std::setw(3) << "2" << " - " << "积分40 + 点点通33" << std::endl;
+            std::cout << setiosflags(std::ios::right) << std::setw(3) << "1" << " - " << "积分39" << std::endl;
+            std::cout << setiosflags(std::ios::right) << std::setw(3) << "2" << " - " << "积分39 + 点点通33" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "T" << " - " << "题库训练" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "Q" << " - " << "退出" << std::endl;
             std::string arg = user_input("请选择(1/2/T/Q): ");

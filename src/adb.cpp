@@ -138,7 +138,7 @@ void adb::read(bool is_ppp) {
         score12 = atoi(sm[1].str().c_str());
         logger->info("[发表观点]：已获{}分/每日上限1分", score12);
 
-        if (score1 >= 12 && score11 >= 1 && score12 >= 1) {
+        if (score1 >= 12 && score11 >= 1) {
             if (is_ppp) {
                 store();
                 logger->info("[点点通明细]");
@@ -436,7 +436,7 @@ void adb::daily(bool is_training) {
         logger->info("[每日答题]");
         tap(select_with_text("每日答题"), 10);
     } else {
-        if (score4 >= 6) {
+        if (score4 >= 5) {
             logger->info("[返回]");
             back();
             back();
