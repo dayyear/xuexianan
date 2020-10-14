@@ -816,6 +816,72 @@ void adb::challenge(bool is_ppp) {
     }
 }
 
+void adb::race() {
+    std::string content_utf_old, options_utf_old;
+    for (;;) {
+        std::string content_utf, options_utf;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        try {
+            pull();
+
+            // 题干
+            auto xpath_nodes = ui.select_nodes(gbk2utf("//node[starts-with(@text,'距离答题结束00') or starts-with(@content-desc,'距离答题结束00')]/following-sibling::node[1]/node[1]/node[1]/node[1]/node[1]/node[1]").c_str());
+            if (!xpath_nodes.size()) {
+                logger->warn("[not found content]");
+                continue;
+            }
+            for (auto &xpath_node : xpath_nodes) {
+                content_utf += xpath_node.node().attribute("text").value();
+                content_utf += xpath_node.node().attribute("content-desc").value();
+                content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
+                content_utf = std::regex_replace(content_utf, std::regex("\\s"), "");
+                content_utf = std::regex_replace(content_utf, std::regex("^\\d*\\."), "");
+            }
+
+            // 选项
+            xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+            if (!xpath_nodes.size()) {
+                logger->warn("[not found options]");
+                continue;
+            }
+            for (auto &xpath_node : xpath_nodes) {
+                std::string option_utf;
+                option_utf += xpath_node.node().attribute("text").value();
+                option_utf += xpath_node.node().attribute("content-desc").value();
+                options_utf += option_utf + "\r\n";
+            }
+            options_utf = options_utf.substr(0, options_utf.size() - 2);
+
+            // 重复检测
+            if (content_utf_old == content_utf && options_utf_old == options_utf)
+                continue;
+            content_utf_old = content_utf;
+            options_utf_old = options_utf;
+
+            // log
+            std::cout << std::endl;
+            logger->info("[争上游答题] {}", utf2gbk(content_utf));
+            for (auto &xpath_node : xpath_nodes) {
+                std::string option_utf;
+                option_utf += xpath_node.node().attribute("text").value();
+                option_utf += xpath_node.node().attribute("content-desc").value();
+                logger->info(utf2gbk(option_utf));
+            }
+
+            // 答案提示
+            auto result = db.get_answer("single", content_utf, options_utf);
+            auto answer_db = result["answer"].asString();
+            if (answer_db.size())
+                logger->info("[答案提示]：{}", answer_db);
+            else
+                logger->info("[答案提示]：{}", "null");
+
+        } catch (const std::exception &ex) {
+            logger->warn("{}", ex.what());
+        }
+    }
+}
+
 void adb::local() {
     int score13;
     std::smatch sm;

@@ -35,6 +35,7 @@ int main() {
             logger->info("[主菜单]");
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "1" << " - " << "积分39" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "2" << " - " << "积分39 + 点点通33" << std::endl;
+            std::cout << setiosflags(std::ios::right) << std::setw(3) << "3" << " - " << "争上游 + 双人对战" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "T" << " - " << "题库训练" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "Q" << " - " << "退出" << std::endl;
             std::string arg = user_input("请选择(1/2/T/Q): ");
@@ -74,6 +75,13 @@ int main() {
                 }
                 auto time_end = clock();
                 logger->info("用时 {:.1f} 分钟。学习安安，享受生活！", (float) (time_end - time_start) / CLOCKS_PER_SEC / 60);
+            } else if (arg == "3") {
+                logger->info("[答题争上游]");
+                try {
+                    adb.race();
+                } catch (const std::exception &ex) {
+                    logger->error("{}", ex.what());
+                }
             } else if (arg == "T" || arg == "t") {
                 logger->info("[题库训练]");
                 adb.init();

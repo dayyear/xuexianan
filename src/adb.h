@@ -25,6 +25,7 @@ public:
     void listen(bool is_ppp = true);
     void daily(bool is_training = false);
     void challenge(bool is_ppp = true);
+    void race();
     void local();
 
     // µ¼º½
