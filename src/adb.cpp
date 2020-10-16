@@ -820,7 +820,7 @@ void adb::race() {
     std::string content_utf_old, options_utf_old;
     for (;;) {
         std::string content_utf, options_utf;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
         try {
             pull();
 
