@@ -654,7 +654,7 @@ void adb::daily(bool is_training) {
             return;
         }
         logger->info("[再来一组]");
-        tap(select_with_text("再来一组"), 10);
+        tap(select_with_text("再来一组"));
     }
 }
 
