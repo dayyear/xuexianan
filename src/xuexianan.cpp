@@ -43,13 +43,13 @@ int main() {
                 adb.init();
                 for (;;) {
                     try {
-                        adb.race2();
-                        adb.race4();
                         adb.local();
+                        adb.race2();
                         adb.daily(false);
                         adb.challenge(false);
                         adb.read(false);
                         adb.listen(false);
+                        adb.race4();
                         break;
                     } catch (const std::exception &ex) {
                         logger->error("{}", ex.what());
@@ -63,13 +63,13 @@ int main() {
                 adb.init();
                 for (;;) {
                     try {
-                        adb.race2();
-                        adb.race4();
                         adb.local();
+                        adb.race2();
                         adb.daily(false);
                         adb.challenge(true);
                         adb.read(true);
                         adb.listen(true);
+                        adb.race4();
                         break;
                     } catch (const std::exception &ex) {
                         logger->error("{}", ex.what());
@@ -83,6 +83,7 @@ int main() {
                 adb.init();
                 for (;;) {
                     try {
+                        adb.challenge(false, true);
                         adb.daily(true);
                     } catch (const std::exception &ex) {
                         logger->error("{}", ex.what());

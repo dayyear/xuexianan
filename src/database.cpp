@@ -33,7 +33,7 @@ Json::Value database::get_answer(const std::string &type, const std::string &con
     return result;
 }
 
-int database::insert_or_update_answer(const std::string &type, const std::string &content, const std::string &options, const std::string &answer) {
+int database::insert_or_update_answer(const std::string &type, const std::string &content, const std::string &options, const std::string &answer, const std::string &notanswer) {
     // https://www.runoob.com/cprogramming/c-function-strftime.html
     time_t rawtime;
     char buffer[80];
@@ -43,9 +43,9 @@ int database::insert_or_update_answer(const std::string &type, const std::string
     auto result = get_answer(type, content, options);
     std::string sql;
     if (result.isNull())
-        sql = sqlite3_mprintf("insert into quiz(type, content, options, answer, time) values('%q', '%q', '%q', '%q', '%q')", type.c_str(), content.c_str(), options.c_str(), answer.c_str(), buffer);
-    else if (result["answer"].asString() != answer)
-        sql = sqlite3_mprintf("update quiz set answer='%q', time='%q' where type='%q' and content='%q' and options='%q'", answer.c_str(), buffer, type.c_str(), content.c_str(), options.c_str());
+        sql = sqlite3_mprintf("insert into quiz(type, content, options, answer, notanswer, time) values('%q', '%q', '%q', '%q', '%q', '%q')", type.c_str(), content.c_str(), options.c_str(), answer.c_str(), notanswer.c_str(), buffer);
+    else if (result["answer"].asString() != answer || result["notanswer"].asString() != notanswer)
+        sql = sqlite3_mprintf("update quiz set answer='%q', notanswer='%q', time='%q' where type='%q' and content='%q' and options='%q'", answer.c_str(), notanswer.c_str(), buffer, type.c_str(), content.c_str(), options.c_str());
     if (sql.size()) {
         execute(sql);
         return 1;

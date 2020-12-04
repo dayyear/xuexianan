@@ -8,7 +8,7 @@ public:
 
     Json::Value groupby_type();
     Json::Value get_answer(const std::string &type, const std::string &content, const std::string &options);
-    int insert_or_update_answer(const std::string &type, const std::string &content, const std::string &options, const std::string &answer);
+    int insert_or_update_answer(const std::string &type, const std::string &content, const std::string &options, const std::string &answer, const std::string &notanswer);
 
     // execute
     void execute(const std::string &sql);

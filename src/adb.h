@@ -24,7 +24,7 @@ public:
     void read(bool is_ppp = true);
     void listen(bool is_ppp = true);
     void daily(bool is_training = false);
-    void challenge(bool is_ppp = true);
+    void challenge(bool is_ppp = true, bool is_training = false);
     void race2();
     void race4();
     void local();

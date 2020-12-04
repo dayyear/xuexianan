@@ -198,8 +198,8 @@ void adb::read(bool is_ppp) {
                 getxy(x1, y1, bounds, 1, 0, 1, 0);
                 getxy(x2, y2, bounds, 0, 1, 0, 1);
                 // 1. 不重复；2. 不在水下；3. 字数足够；4. 足够宽或general_card_title_id
-                return std::find(titles.begin(), titles.end(), "[我要选读文章]：" + text) == titles.end() && y2 - y1 > 3 && text.size() > 5 && (x2 - x1 > 0.8 * this->width || resource_id == "cn.xuexi.android:id/general_card_title_id");
-            });
+                    return std::find(titles.begin(), titles.end(), "[我要选读文章]：" + text) == titles.end() && y2 - y1 > 3 && text.size() > 5 && (x2 - x1 > 0.8 * this->width || resource_id == "cn.xuexi.android:id/general_card_title_id");
+                });
             logger->info("[我要选读文章]：发现 {} 篇文章", valid_xpath_nodes.size());
             bool is_left = false;
             for (auto &xpath_node : valid_xpath_nodes) {
@@ -226,7 +226,8 @@ void adb::read(bool is_ppp) {
                         auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[4]");
                         tap(node);
                         logger->info("[分享]");
-                        tap(select_with_text("分享到短信"));
+                        tap(select_with_text("分享到学习强国"));
+                        back();
                     } catch (...) {
                     }
 
@@ -367,8 +368,8 @@ void adb::listen(bool is_ppp) {
                 getxy(x1, y1, bounds, 1, 0, 1, 0);
                 getxy(x2, y2, bounds, 0, 1, 0, 1);
                 // 1. 不重复；2. 不在水下；3. 字数足够；4. 足够宽或general_card_title_id
-                return std::find(titles.begin(), titles.end(), "[视听学习]：" + text) == titles.end() && y2 - y1 > 3 && text.size() > 5 && (x2 - x1 > 0.8 * this->width || resource_id == "cn.xuexi.android:id/general_card_title_id");
-            });
+                    return std::find(titles.begin(), titles.end(), "[视听学习]：" + text) == titles.end() && y2 - y1 > 3 && text.size() > 5 && (x2 - x1 > 0.8 * this->width || resource_id == "cn.xuexi.android:id/general_card_title_id");
+                });
             logger->info("[视听学习]：发现 {} 个视听", valid_xpath_nodes.size());
             bool is_left = false;
             for (auto &xpath_node : valid_xpath_nodes) {
@@ -630,7 +631,7 @@ void adb::daily(bool is_training) {
         else
             throw std::runtime_error("[每日答题] 未知题型：" + type);
         if (is_training && (content_utf.size() + options_utf.size()))
-            if (db.insert_or_update_answer(type, content_utf, options_utf, answer_correct_utf)) {
+            if (db.insert_or_update_answer(type, content_utf, options_utf, answer_correct_utf, "")) {
                 logger->info("[保存答案至题库]");
                 auto groupby_type = db.groupby_type();
                 logger->info("[题库统计]：单选题 {}；多选题 {}；填空题 {}", groupby_type[3]["c"].asString(), groupby_type[2]["c"].asString(), groupby_type[0]["c"].asString());
@@ -658,7 +659,7 @@ void adb::daily(bool is_training) {
     }
 }
 
-void adb::challenge(bool is_ppp) {
+void adb::challenge(bool is_ppp, bool is_training) {
     int score7;
     std::smatch sm;
     pugi::xml_node node;
@@ -676,7 +677,9 @@ void adb::challenge(bool is_ppp) {
     logger->info("[挑战答题]：已获{}分/每日上限6分", score7);
 
     int five;
-    if (score7 >= 6) {
+    if (is_training)
+        five = INT_MAX / 5;
+    else if (score7 >= 6) {
         if (is_ppp) {
             store();
             logger->info("[点点通明细]");
@@ -727,7 +730,7 @@ void adb::challenge(bool is_ppp) {
     logger->info("[挑战答题]");
     tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[3]"), 10);
 
-    for (int i = 1;; i++) {
+    for (int i = 1; i <= 1000; i++) {
         std::cout << std::endl;
         auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
 
@@ -760,13 +763,18 @@ void adb::challenge(bool is_ppp) {
         auto result = db.get_answer(i <= (five * 5) ? "single" : "max", content_utf, options_utf);
         logger->info("[答案提示]：{}", dump(result));
         auto answer_db = result["answer"].asString();
+        auto notanswer_db = result["notanswer"].asString();
         int answer_index;
         if (answer_db.size()) {
             logger->info("[提交答案]：{}", answer_db);
             answer_index = c2i(answer_db[0]);
         } else {
-            answer_index = rand() % xpath_nodes.size();
-            logger->info("[提交答案]：{}", i2c(answer_index));
+            if (notanswer_db.size() >= xpath_nodes.size())
+                throw std::runtime_error("数据库无效notanswer");
+            do {
+                answer_index = rand() % xpath_nodes.size();
+            } while (notanswer_db.find(i2c(answer_index)) != std::string::npos);
+            logger->info("[提交随机答案]：{}", i2c(answer_index));
         }
         for (;;) {
             auto node = xpath_nodes[answer_index].node();
@@ -781,15 +789,14 @@ void adb::challenge(bool is_ppp) {
             xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/node//node[@index='1']");
         }
 
-        // 如果因为字体太大点空了，则自动休息30秒，等待自行结束
-        std::ostringstream oss;
-        oss << i << " /10";
-        if (exist_with_text(oss.str())) {
-            logger->warn("No answer response!");
-            std::this_thread::sleep_for(std::chrono::seconds(30));
-        }
-
         if (exist_with_text("挑战结束")) {
+            if (is_training && (content_utf.size() + options_utf.size()))
+                if (db.insert_or_update_answer("single", content_utf, options_utf, "", notanswer_db + i2c(answer_index))) {
+                    logger->info("[保存答案至题库]");
+                    auto groupby_type = db.groupby_type();
+                    logger->info("[题库统计]：单选题 {}；多选题 {}；填空题 {}", groupby_type[3]["c"].asString(), groupby_type[2]["c"].asString(), groupby_type[0]["c"].asString());
+                }
+
             text = get_text(select("//node[@text='挑战结束' or @content-desc='挑战结束']/following-sibling::node[1]"));
             if (!std::regex_search(text, sm, std::regex("本次答对 (\\d+) 题")))
                 throw std::runtime_error("找不到[ 本次答对 (\\d+) 题 ]");
@@ -809,11 +816,18 @@ void adb::challenge(bool is_ppp) {
             }
 
             logger->info("[再来一局]");
-            tap(select_with_text("再来一局"), 10);
+            tap(select_with_text("再来一局"));
             i = 0;
             continue;
+        } else if (is_training && (content_utf.size() + options_utf.size())) {
+            if (db.insert_or_update_answer("single", content_utf, options_utf, std::string(1, i2c(answer_index)), "")) {
+                logger->info("[保存答案至题库]");
+                auto groupby_type = db.groupby_type();
+                logger->info("[题库统计]：单选题 {}；多选题 {}；填空题 {}", groupby_type[3]["c"].asString(), groupby_type[2]["c"].asString(), groupby_type[0]["c"].asString());
+            }
         }
     }
+    this->repair();
 }
 
 void adb::race2() {
@@ -991,6 +1005,8 @@ void adb::race4() {
                 logger->debug("pull");
                 pull();
 
+                if (exist_with_text("温故知新"))
+                    back();
                 if (exist_with_text("继续挑战")) {
                     logger->info("[返回]");
                     back();
