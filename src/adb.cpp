@@ -887,7 +887,8 @@ void adb::race2() {
                 }
 
                 // Ìâ¸É
-                auto xpath_nodes = ui.select_nodes(gbk2utf("//node[starts-with(@text,'¾àÀë´ðÌâ½áÊø00') or starts-with(@content-desc,'¾àÀë´ðÌâ½áÊø00')]/following-sibling::node[1]/node[1]/node[1]/node[1]/node[1]/node[1]").c_str());
+                // auto xpath_nodes = ui.select_nodes(gbk2utf("//node[starts-with(@text,'¾àÀë´ðÌâ½áÊø00') or starts-with(@content-desc,'¾àÀë´ðÌâ½áÊø00')]/following-sibling::node[1]/node[1]/node[1]/node[1]/node[1]/node[1]").c_str());
+                auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
                 if (!xpath_nodes.size()) {
                     logger->warn("[not found content]");
                     continue;
@@ -1014,7 +1015,8 @@ void adb::race4() {
                 }
 
                 // Ìâ¸É
-                auto xpath_nodes = ui.select_nodes(gbk2utf("//node[starts-with(@text,'¾àÀë´ðÌâ½áÊø00') or starts-with(@content-desc,'¾àÀë´ðÌâ½áÊø00')]/following-sibling::node[1]/node[1]/node[1]/node[1]/node[1]/node[1]").c_str());
+                // auto xpath_nodes = ui.select_nodes(gbk2utf("//node[starts-with(@text,'¾àÀë´ðÌâ½áÊø00') or starts-with(@content-desc,'¾àÀë´ðÌâ½áÊø00')]/following-sibling::node[1]/node[1]/node[1]/node[1]/node[1]/node[1]").c_str());
+                auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
                 if (!xpath_nodes.size()) {
                     logger->warn("[not found content]");
                     continue;
