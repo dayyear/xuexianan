@@ -49,6 +49,7 @@ int main() {
                         adb.challenge(false);
                         adb.read(false);
                         adb.listen(false);
+                        adb.race4();
                         break;
                     } catch (const std::exception &ex) {
                         logger->error("{}", ex.what());

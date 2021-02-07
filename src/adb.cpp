@@ -142,7 +142,7 @@ void adb::read(bool is_ppp) {
             if (is_ppp) {
                 store();
                 logger->info("[点点通明细]");
-                tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+                tap(select("//node[@text='点点通明细' or @content-desc='点点通明细']/following-sibling::node[1]"), 5);
                 pull();
                 auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='有效浏览' or @content-desc='有效浏览']/following-sibling::node[1]").c_str());
                 int ppp = 0;
@@ -312,7 +312,7 @@ void adb::listen(bool is_ppp) {
             if (is_ppp) {
                 store();
                 logger->info("[点点通明细]");
-                tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+                tap(select("//node[@text='点点通明细' or @content-desc='点点通明细']/following-sibling::node[1]"), 5);
                 pull();
                 auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='有效视听' or @content-desc='有效视听']/following-sibling::node[1]").c_str());
                 int ppp = 0;
@@ -432,8 +432,14 @@ void adb::daily(bool is_training) {
         logger->info("[我要答题]");
         tap(select_with_text("我要答题"), 10);
         pull();
+        if (exist_with_text("下一步"))
+            tap(select_with_text("下一步"));
+        if (exist_with_text("下一步"))
+            tap(select_with_text("下一步"));
         if (exist_with_text("知道了"))
             tap(select_with_text("知道了"));
+        if (exist_with_text("立即答题"))
+            tap(select_with_text("立即答题"));
         logger->info("[每日答题]");
         tap(select_with_text("每日答题"), 10);
     } else {
@@ -683,7 +689,7 @@ void adb::challenge(bool is_ppp, bool is_training) {
         if (is_ppp) {
             store();
             logger->info("[点点通明细]");
-            tap(select("//node[@text='我的点点通' or @content-desc='我的点点通']/following-sibling::node[1]"), 5);
+            tap(select("//node[@text='点点通明细' or @content-desc='点点通明细']/following-sibling::node[1]"), 5);
             pull();
             auto ppps_xpath = ui.select_nodes(gbk2utf("//node[@text='挑战答题' or @content-desc='挑战答题']/following-sibling::node[1]").c_str());
             int ppp = 0;
@@ -727,6 +733,8 @@ void adb::challenge(bool is_ppp, bool is_training) {
         tap(select_with_text("下一步"));
     if (exist_with_text("知道了"))
         tap(select_with_text("知道了"));
+    if (exist_with_text("立即答题"))
+        tap(select_with_text("立即答题"));
     logger->info("[挑战答题]");
     tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[3]"), 10);
 
@@ -857,6 +865,8 @@ void adb::race2() {
         tap(select_with_text("下一步"));
     if (exist_with_text("知道了"))
         tap(select_with_text("知道了"));
+    if (exist_with_text("立即答题"))
+        tap(select_with_text("立即答题"));
     logger->info("[双人对战]");
     tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[2]"), 10);
 
@@ -869,8 +879,8 @@ void adb::race2() {
             back();
             break;
         }
-        logger->info("[邀请对手]");
-        tap(select("//node[@text='邀请对手' or @content-desc='邀请对手']/preceding-sibling::node[1]"), 2, false);
+        logger->info("[随机匹配]");
+        tap(select("//node[@text='随机匹配' or @content-desc='随机匹配']/preceding-sibling::node[1]"), 2, false);
         logger->info("[开始对战]");
         tap(select_with_text("开始对战"), 10, false);
         for (;;) {
@@ -986,6 +996,8 @@ void adb::race4() {
         tap(select_with_text("下一步"));
     if (exist_with_text("知道了"))
         tap(select_with_text("知道了"));
+    if (exist_with_text("立即答题"))
+        tap(select_with_text("立即答题"));
     logger->info("[争上游答题]");
     tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[1]"), 10);
 
@@ -1159,7 +1171,7 @@ void adb::store() {
         logger->info("[强国商城]");
         tap(select_with_text("强国商城兑福利"), 5);
         pull();
-        if (exist_with_text("我的点点通"))
+        if (exist_with_text("点点通明细"))
             return;
         back();
     }
