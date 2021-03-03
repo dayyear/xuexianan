@@ -26,7 +26,7 @@ public:
     void daily(bool is_training = false);
     void challenge(bool is_ppp = true, bool is_training = false);
     void race2();
-    void race4();
+    void race4(int count = 31);
     void local();
 
     // µ¼º½

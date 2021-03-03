@@ -969,7 +969,7 @@ void adb::race2() {
     }
 }
 
-void adb::race4() {
+void adb::race4(int count) {
     int score8;
     std::smatch sm;
     pugi::xml_node node;
@@ -1002,7 +1002,7 @@ void adb::race4() {
     tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[1]"), 10);
 
     for (;;) {
-        if (exist_with_text("今日积分奖励局31/2")) {
+        if (exist_with_text("今日积分奖励局" + std::to_string(count) + "/2")) {
             logger->info("[返回]");
             back(1, false);
             back(1, false);
@@ -1169,7 +1169,7 @@ void adb::score() {
 void adb::store() {
     for (int i = 0; i < 3; i++) {
         logger->info("[强国商城]");
-        tap(select_with_text("强国商城兑福利"), 5);
+        tap(select_with_text("强国城兑福利"), 5);
         pull();
         if (exist_with_text("点点通明细"))
             return;
