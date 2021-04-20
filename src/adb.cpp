@@ -1154,6 +1154,8 @@ void adb::score() {
     for (int i = 0; i < 3; i++) {
         logger->info("[学习积分]");
         tap(select_with_text("学习积分"), 10);
+        if (exist_with_text("重启"))
+            tap(select_with_text("重启"), 10);
         if (exist_with_text("积分明细")) {
             pull();
             if (exist_with_text("好的，知道了"))
