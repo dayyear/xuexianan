@@ -1307,7 +1307,15 @@ void adb::swipe_right(int64_t delay, bool is_pull) {
 
 // 获取界面xml
 void adb::pull() {
-    auto result = exec("adb shell uiautomator dump /sdcard/ui.xml");
+    std::string result;
+    try {
+        result = exec("adb shell uiautomator dump /sdcard/ui.xml");
+    } catch (const std::exception &ex) {
+        std::string err_message(ex.what());
+        if (err_message.find("java.io.FileNotFoundException") == std::string::npos)
+            throw std::runtime_error(err_message);
+    }
+    //auto result = exec("adb shell uiautomator dump /sdcard/ui.xml");
     if (result.size() && result.find("UI hierchary dumped to") == std::string::npos)
         throw std::runtime_error(result);
     if (result.size())
