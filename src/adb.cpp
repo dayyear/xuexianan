@@ -870,7 +870,7 @@ void adb::race2() {
     logger->info("[双人对战]");
     tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[2]"), 10);
 
-    for (;;) {
+    for (auto i1 = 0; i1 < 50; i1++) {
         if (!exist_with_text("今日积分奖励局：1/1")) {
             logger->info("[返回]");
             back(1);
@@ -883,7 +883,7 @@ void adb::race2() {
         tap(select("//node[@text='随机匹配' or @content-desc='随机匹配']/preceding-sibling::node[1]"), 2, false);
         logger->info("[开始对战]");
         tap(select_with_text("开始对战"), 10, false);
-        for (;;) {
+        for (auto i2 = 0; i2 < 50; i2++) {
             std::string content_utf, options_utf;
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
             try {
@@ -1001,7 +1001,7 @@ void adb::race4(int count) {
     logger->info("[争上游答题]");
     tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[1]"), 10);
 
-    for (;;) {
+    for (auto i1 = 0; i1 < 50; i1++) {
         if (exist_with_text("今日积分奖励局" + std::to_string(count) + "/2")) {
             logger->info("[返回]");
             back(1, false);
@@ -1011,7 +1011,7 @@ void adb::race4(int count) {
         }
         logger->info("[开始比赛]");
         tap(select_with_text("开始比赛"), 10, false);
-        for (;;) {
+        for (auto i2 = 0; i2 < 50; i2++) {
             std::string content_utf, options_utf;
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
             try {
