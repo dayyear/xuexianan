@@ -262,7 +262,7 @@ void adb::read(bool is_ppp) {
                 back(1, false);
                 back();
             }
-            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && title_index % 24 == 0)) {
+            if (exist_with_text("你已经看到我的底线了") || exist_with_text("内容持续更新中") || (valid_xpath_nodes.size() && title_index % 24 == 0)) {
                 swipe_left();
                 logger->info("[刷新]");
                 tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
@@ -396,7 +396,7 @@ void adb::listen(bool is_ppp) {
                 c++;
                 back();
             }
-            if (exist_with_text("你已经看到我的底线了") || (valid_xpath_nodes.size() && title_index % 24 == 0)) {
+            if (exist_with_text("你已经看到我的底线了") || exist_with_text("内容持续更新中") || (valid_xpath_nodes.size() && title_index % 24 == 0)) {
                 swipe_right();
                 logger->info("[刷新]");
                 tap(select_with_text("电视台"));
