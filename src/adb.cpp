@@ -540,8 +540,10 @@ void adb::daily(bool is_training) {
             }
         } else if (type == "单选题" || type == "多选题") {
             std::cout << std::endl;
-            auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
-            for (auto &xpath_node : xpath_nodes) {
+            auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node");
+            std::list<pugi::xpath_node> reverse_xpath_nodes;
+            std::copy(xpath_nodes.begin(), xpath_nodes.end(), std::front_inserter(reverse_xpath_nodes));
+            for (auto &xpath_node : reverse_xpath_nodes) {
                 content_utf += xpath_node.node().attribute("text").value();
                 content_utf += xpath_node.node().attribute("content-desc").value();
                 // 华为真机、360真机、夜神模拟器的界面xml，8个0xc20xa0前面多个空格0x20，而MuMu模拟器的界面xml，只有8个0xc20xa0，前面没有空格\x20
@@ -898,12 +900,14 @@ void adb::race2() {
 
                 // 题干
                 // auto xpath_nodes = ui.select_nodes(gbk2utf("//node[starts-with(@text,'距离答题结束00') or starts-with(@content-desc,'距离答题结束00')]/following-sibling::node[1]/node[1]/node[1]/node[1]/node[1]/node[1]").c_str());
-                auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
+                auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node");
+                std::list<pugi::xpath_node> reverse_xpath_nodes;
+                std::copy(xpath_nodes.begin(), xpath_nodes.end(), std::front_inserter(reverse_xpath_nodes));
                 if (!xpath_nodes.size()) {
                     logger->warn("[not found content]");
                     continue;
                 }
-                for (auto &xpath_node : xpath_nodes) {
+                for (auto &xpath_node : reverse_xpath_nodes) {
                     content_utf += xpath_node.node().attribute("text").value();
                     content_utf += xpath_node.node().attribute("content-desc").value();
                     content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
@@ -912,7 +916,8 @@ void adb::race2() {
                 }
 
                 // 选项
-                xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+                // xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+                xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]").c_str());
                 if (!xpath_nodes.size()) {
                     logger->warn("[not found options]");
                     continue;
@@ -940,13 +945,13 @@ void adb::race2() {
                 auto answer_db = result["answer"].asString();
                 int answer_index;
                 if (answer_db.size()) {
-                    logger->info("[答案提示]：{}", answer_db);
+                    logger->info("[答案提示]：{}", dump(result));
                     logger->info("[提交答案]：{}", answer_db);
                     answer_index = c2i(answer_db[0]);
                 } else {
                     logger->info("[答案提示]：{}", "null");
                     answer_index = rand() % xpath_nodes.size();
-                    answer_index = 0;
+                    // answer_index = 0;
                     logger->info("[提交答案]：{}", i2c(answer_index));
                 }
                 for (;;) {
@@ -959,7 +964,8 @@ void adb::race2() {
                         break;
                     }
                     swipe_up();
-                    xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+                    // xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+                    xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]").c_str());
                 }
 
             } catch (const std::exception &ex) {
@@ -1028,12 +1034,14 @@ void adb::race4(int count) {
 
                 // 题干
                 // auto xpath_nodes = ui.select_nodes(gbk2utf("//node[starts-with(@text,'距离答题结束00') or starts-with(@content-desc,'距离答题结束00')]/following-sibling::node[1]/node[1]/node[1]/node[1]/node[1]/node[1]").c_str());
-                auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node[1]");
+                auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node");
+                std::list<pugi::xpath_node> reverse_xpath_nodes;
+                std::copy(xpath_nodes.begin(), xpath_nodes.end(), std::front_inserter(reverse_xpath_nodes));
                 if (!xpath_nodes.size()) {
                     logger->warn("[not found content]");
                     continue;
                 }
-                for (auto &xpath_node : xpath_nodes) {
+                for (auto &xpath_node : reverse_xpath_nodes) {
                     content_utf += xpath_node.node().attribute("text").value();
                     content_utf += xpath_node.node().attribute("content-desc").value();
                     content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
@@ -1042,7 +1050,8 @@ void adb::race4(int count) {
                 }
 
                 // 选项
-                xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+                // xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+                xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]").c_str());
                 if (!xpath_nodes.size()) {
                     logger->warn("[not found options]");
                     continue;
@@ -1070,13 +1079,13 @@ void adb::race4(int count) {
                 auto answer_db = result["answer"].asString();
                 int answer_index;
                 if (answer_db.size()) {
-                    logger->info("[答案提示]：{}", answer_db);
+                    logger->info("[答案提示]：{}", dump(result));
                     logger->info("[提交答案]：{}", answer_db);
                     answer_index = c2i(answer_db[0]);
                 } else {
                     logger->info("[答案提示]：{}", "null");
                     answer_index = rand() % xpath_nodes.size();
-                    answer_index = 0;
+                    // answer_index = 0;
                     logger->info("[提交答案]：{}", i2c(answer_index));
                 }
                 for (;;) {
@@ -1089,7 +1098,8 @@ void adb::race4(int count) {
                         break;
                     }
                     swipe_up();
-                    xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+                    // xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]/node[1]/node[2]").c_str());
+                    xpath_nodes = ui.select_nodes(gbk2utf("//node[@class='android.widget.ListView']/node[@index]").c_str());
                 }
 
             } catch (const std::exception &ex) {
@@ -1194,7 +1204,25 @@ void adb::repair() {
 }
 
 void adb::test() {
+	std::string content_utf;
     pull();
+	auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node");
+	std::list<pugi::xpath_node> reverse_xpath_nodes;
+	std::copy(xpath_nodes.begin(), xpath_nodes.end(), std::front_inserter(reverse_xpath_nodes));
+    for (auto &xpath_node : reverse_xpath_nodes) {
+        content_utf += xpath_node.node().attribute("text").value();
+        content_utf += xpath_node.node().attribute("content-desc").value();
+        // 华为真机、360真机、夜神模拟器的界面xml，8个0xc20xa0前面多个空格0x20，而MuMu模拟器的界面xml，只有8个0xc20xa0，前面没有空格\x20
+        // 参考[https://www.utf8-chartable.de/unicode-utf8-table.pl?utf8=dec]: U+00A0 194(0xc2) 160(0xa0) NO-BREAK SPACE
+        if (!std::regex_search(content_utf, std::regex("\x20((\\xc2\\xa0){8})")) && std::regex_search(content_utf, std::regex("(\\xc2\\xa0){8}")))
+            logger->warn("MuMu模拟器！");
+        content_utf = std::regex_replace(content_utf, std::regex("\\xc2\\xa0"), "_");
+        content_utf = std::regex_replace(content_utf, std::regex("\\s"), "");
+    }
+    logger->info("{}", utf2gbk(content_utf));
+	return;
+
+	pull();
     int x, y;
     getxy(x, y, select("//node").attribute("bounds").value());
     width = 2 * x;

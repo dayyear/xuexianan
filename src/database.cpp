@@ -26,7 +26,7 @@ Json::Value database::groupby_type() {
 
 void write_file(const std::string &file_name, const std::string &s);
 Json::Value database::get_answer(const std::string &type, const std::string &content, const std::string &options) {
-    auto sql = sqlite3_mprintf("select answer, notanswer from quiz where type='%q' and content='%q' and options='%q'", type.c_str(), content.c_str(), options.c_str());
+    auto sql = sqlite3_mprintf("select answer, notanswer,time from quiz where type='%q' and content='%q' and options='%q'", type.c_str(), content.c_str(), options.c_str());
     write_file("log/sql.txt", sql);
     auto result = get_items(sql)[0];
     sqlite3_free(sql);
