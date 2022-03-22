@@ -44,12 +44,12 @@ int main() {
                 for (;;) {
                     try {
                         adb.local();
-                        adb.race2();
                         adb.daily(false);
                         adb.challenge(false);
                         adb.read(false);
                         adb.listen(false);
                         adb.race4();
+                        adb.race2();
                         break;
                     } catch (const std::exception &ex) {
                         logger->error("{}", ex.what());
@@ -64,12 +64,12 @@ int main() {
                 for (;;) {
                     try {
                         adb.local();
-                        adb.race2();
                         adb.daily(false);
                         adb.challenge(true);
                         adb.read(true);
                         adb.listen(true);
                         adb.race4();
+                        adb.race2();
                         break;
                     } catch (const std::exception &ex) {
                         logger->error("{}", ex.what());
