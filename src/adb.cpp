@@ -123,15 +123,16 @@ void adb::read(bool is_ppp) {
         logger->info("[我要选读文章]：已获{}分/每日上限12分", score1);
 
         // 分享
-        node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='2']");
+        /*node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='2']");
         text = get_text(node);
         if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
             throw std::runtime_error("找不到[ 分享 ]");
         score11 = atoi(sm[1].str().c_str());
-        logger->info("[分享]：已获{}分/每日上限1分", score11);
+        logger->info("[分享]：已获{}分/每日上限1分", score11);*/
+		score11 = 1;
 
         // 发表观点
-        node = select("//node[@class='android.widget.ListView']/node[@index='12']/node[@index='2']");
+        node = select("//node[@class='android.widget.ListView']/node[@index='10']/node[@index='2']");
         text = get_text(node);
         if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
             throw std::runtime_error("找不到[ 发表观点 ]");
@@ -677,17 +678,17 @@ void adb::challenge(bool is_ppp, bool is_training) {
     score();
 
     // 挑战答题
-    node = select("//node[@class='android.widget.ListView']/node[@index='7']/node[@index='2']");
+    node = select("//node[@class='android.widget.ListView']/node[@index='6']/node[@index='2']");
     text = get_text(node);
-    if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限6分")))
+    if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限5分")))
         throw std::runtime_error("找不到[ 挑战答题 ]");
     score7 = atoi(sm[1].str().c_str());
-    logger->info("[挑战答题]：已获{}分/每日上限6分", score7);
+    logger->info("[挑战答题]：已获{}分/每日上限5分", score7);
 
     int five;
     if (is_training)
         five = INT_MAX / 5;
-    else if (score7 >= 6) {
+    else if (score7 >= 5) {
         if (is_ppp) {
             store();
             logger->info("[点点通明细]");
@@ -850,7 +851,7 @@ void adb::race2() {
     score();
 
     // 争上游答题
-    node = select("//node[@class='android.widget.ListView']/node[@index='9']/node[@index='2']");
+    node = select("//node[@class='android.widget.ListView']/node[@index='8']/node[@index='2']");
     text = get_text(node);
     if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限2分")))
         throw std::runtime_error("找不到[ 双人对战 ]");
@@ -985,7 +986,7 @@ void adb::race4(int count) {
     score();
 
     // 争上游答题
-    node = select("//node[@class='android.widget.ListView']/node[@index='8']/node[@index='2']");
+    node = select("//node[@class='android.widget.ListView']/node[@index='7']/node[@index='2']");
     text = get_text(node);
     if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限5分")))
         throw std::runtime_error("找不到[ 争上游答题 ]");
@@ -1118,8 +1119,8 @@ void adb::local() {
     // 积分界面
     score();
 
-    // 每日答题
-    node = select("//node[@class='android.widget.ListView']/node[@index='13']/node[@index='2']");
+    // 本地频道
+    node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='2']");
     text = get_text(node);
     if (!std::regex_search(text, sm, std::regex("已获(\\d)分/每日上限1分")))
         throw std::runtime_error("找不到[ 本地频道 ]");
@@ -1133,7 +1134,7 @@ void adb::local() {
         return;
     }
     for (;;) {
-        node = select("//node[@class='android.widget.ListView']/node[@index='13']/node[@index='3']");
+        node = select("//node[@class='android.widget.ListView']/node[@index='11']/node[@index='3']");
         std::string bounds = node.attribute("bounds").value();
         int x, y1, y2;
         getxy(x, y1, bounds, 1, 1, 1, 0);
