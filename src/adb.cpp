@@ -129,7 +129,7 @@ void adb::read(bool is_ppp) {
             throw std::runtime_error("找不到[ 分享 ]");
         score11 = atoi(sm[1].str().c_str());
         logger->info("[分享]：已获{}分/每日上限1分", score11);*/
-		score11 = 1;
+        score11 = 1;
 
         // 发表观点
         node = select("//node[@class='android.widget.ListView']/node[@index='10']/node[@index='3']/node[@index='0']");
@@ -262,6 +262,8 @@ void adb::read(bool is_ppp) {
                 c++;
                 back(1, false);
                 back();
+                if (exist_with_text("加入书架"))
+                    tap(select_with_text("取消"));
             }
             if (exist_with_text("你已经看到我的底线了") || exist_with_text("内容持续更新中") || (valid_xpath_nodes.size() && title_index % 24 == 0)) {
                 swipe_left();
@@ -1147,7 +1149,7 @@ void adb::local() {
         swipe_up();
     }
 
-    tap(select("//node[@class='android.support.v7.widget.RecyclerView']/node[1]"));
+    tap(select("//node[@class='android.support.v7.widget.RecyclerView' or @class='androidx.recyclerview.widget.RecyclerView']/node[1]"));
     back();
 }
 
@@ -1205,11 +1207,11 @@ void adb::repair() {
 }
 
 void adb::test() {
-	std::string content_utf;
+    std::string content_utf;
     pull();
-	auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node");
-	std::list<pugi::xpath_node> reverse_xpath_nodes;
-	std::copy(xpath_nodes.begin(), xpath_nodes.end(), std::front_inserter(reverse_xpath_nodes));
+    auto xpath_nodes = ui.select_nodes("//node[@class='android.widget.ListView']/preceding-sibling::node");
+    std::list<pugi::xpath_node> reverse_xpath_nodes;
+    std::copy(xpath_nodes.begin(), xpath_nodes.end(), std::front_inserter(reverse_xpath_nodes));
     for (auto &xpath_node : reverse_xpath_nodes) {
         content_utf += xpath_node.node().attribute("text").value();
         content_utf += xpath_node.node().attribute("content-desc").value();
@@ -1221,9 +1223,9 @@ void adb::test() {
         content_utf = std::regex_replace(content_utf, std::regex("\\s"), "");
     }
     logger->info("{}", utf2gbk(content_utf));
-	return;
+    return;
 
-	pull();
+    pull();
     int x, y;
     getxy(x, y, select("//node").attribute("bounds").value());
     width = 2 * x;
