@@ -106,8 +106,8 @@ void adb::read(bool is_ppp) {
 
     logger->info("[学习]");
     tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
-    logger->info("[推荐]");
-    tap(select_with_text("推荐"));
+    logger->info("[思想]");
+    tap(select_with_text("思想"));
     logger->info("[刷新]");
     tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
     for (;;) {
@@ -236,12 +236,14 @@ void adb::read(bool is_ppp) {
                 if (score12 < 1)
                     try {
                         pull();
-                        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]/node[1]/node[2]");
-                        int comment_count = atoi(get_text(node).c_str());
+                        //auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]/node[1]/node[2]");
+						//int comment_count = atoi(get_text(node).c_str());
+						auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]");
+                        int comment_count = 1;
                         if (comment_count > 0) {
                             tap(node);
                             if (!exist_with_text("删除")) {
-                                node = select("//node[@class='android.support.v7.widget.RecyclerView']/node[3]/node[2]/node[1]");
+                                node = select("//node[@class='android.support.v7.widget.RecyclerView' or @class='androidx.recyclerview.widget.RecyclerView']/node[3]/node[2]/node[1]");
                                 auto comment = get_text(node);
                                 tap(select_with_text("欢迎发表你的观点"));
                                 input_text(comment);

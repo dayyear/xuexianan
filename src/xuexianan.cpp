@@ -31,7 +31,7 @@ int main() {
         try {
             adb adb;
             std::cout << std::endl;
-            logger->info("-------- [学习安安：v2.15.0] --------");
+            logger->info("-------- [学习安安：v2.40.0] --------");
             logger->info("[主菜单]");
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "1" << " - " << "积分46" << std::endl;
             std::cout << setiosflags(std::ios::right) << std::setw(3) << "2" << " - " << "积分46 + 点点通33" << std::endl;
