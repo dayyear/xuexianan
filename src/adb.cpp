@@ -108,6 +108,8 @@ void adb::read(bool is_ppp) {
     tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
     logger->info("[思想]");
     tap(select_with_text("思想"));
+    logger->info("[推荐]");
+    tap(select_with_text("推荐"));
     logger->info("[刷新]");
     tap(select("//node[@resource-id='cn.xuexi.android:id/home_bottom_tab_icon_large']"));
     for (;;) {
@@ -237,8 +239,8 @@ void adb::read(bool is_ppp) {
                     try {
                         pull();
                         //auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]/node[1]/node[2]");
-						//int comment_count = atoi(get_text(node).c_str());
-						auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]");
+                        //int comment_count = atoi(get_text(node).c_str());
+                        auto node = select("//node[@resource-id='cn.xuexi.android:id/BOTTOM_LAYER_VIEW_ID']/node[2]");
                         int comment_count = 1;
                         if (comment_count > 0) {
                             tap(node);
@@ -744,6 +746,8 @@ void adb::challenge(bool is_ppp, bool is_training) {
         tap(select_with_text("立即答题"));
     logger->info("[挑战答题]");
     tap(select("//node[@text='排行榜' or @content-desc='排行榜']/following-sibling::node[3]"), 10);
+    logger->info("[时事政治]");
+    tap(select_with_text("时事政治"));
 
     for (int i = 1; i <= 1000; i++) {
         std::cout << std::endl;
@@ -824,6 +828,7 @@ void adb::challenge(bool is_ppp, bool is_training) {
 
             if (five <= 0) {
                 logger->info("[返回]");
+                back(1, false);
                 back(1, false);
                 back(1, false);
                 back();
